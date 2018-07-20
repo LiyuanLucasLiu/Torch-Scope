@@ -33,12 +33,13 @@ class wrapper():
     def get_logger(self):
         return self.logger
 
-    def add_loss_vs_batch(self, kv_dict, batch_index):
+    def add_loss_vs_batch(self, kv_dict, batch_index, print=True):
         for k, v in kv_dict.items():
             self.writer.add_scalar('loss_tracking/' + k, v, batch_index)
-            self.logger.info("%s : %s", k, v)
+            if print:
+                self.logger.info("%s : %s", k, v)
 
-    def s(self, model, batch_index, save=False):
+    def add_model_parameter_stats(self, model, batch_index, save=False):
         if save:
             self.param_updates = {name: param.detach().cpu().clone() for name, param in model.named_parameters()}
             self.param_updates_batchindex = batch_index

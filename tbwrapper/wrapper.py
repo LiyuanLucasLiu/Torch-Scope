@@ -35,7 +35,7 @@ class wrapper():
 
     def add_loss_vs_batch(self, kv_dict, batch_index):
         for k, v in kv_dict.items():
-            writer.add_scalar('loss_tracking/' + k, v, batch_index)
+            self.writer.add_scalar('loss_tracking/' + k, v, batch_index)
             self.logger.info("%s : %s", k, v)
 
     def s(self, model, batch_index, save=False):

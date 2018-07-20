@@ -38,7 +38,7 @@ class wrapper():
             writer.add_scalar('loss_tracking/' + k, v, batch_index)
             self.logger.info("%s : %s", k, v)
 
-    def add_model_parameter_stats(self, model, batch_index, save=False):
+    def s(self, model, batch_index, save=False):
         if save:
             self.param_updates = {name: param.detach().cpu().clone() for name, param in model.named_parameters()}
             self.param_updates_batchindex = batch_index
@@ -49,7 +49,7 @@ class wrapper():
             self.writer.add_scalar("parameter_value_std/" + name, param.data.std(), batch_index)
 
             if param.requires_grad and param.grad is not None:
-                    if is_sparse(param.grad):
+                    if param.grad.is_sparse:
                         grad_data = param.grad.data._values()
                     else:
                         grad_data = param.grad.data

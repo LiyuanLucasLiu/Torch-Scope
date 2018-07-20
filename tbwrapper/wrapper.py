@@ -1,15 +1,42 @@
 
 from tensorboardX import SummaryWriter
 import torch
+import logging
+import os
+
+# DEBUG > INFO > WARNING > ERROR > CRITICAL    
+# logging.basicConfig(format='%(asctime)s : %(message)s', level=logging.DEBUG)
 
 class wrapper():
 
-    def __init__(self, path):
-        self.writer = SummaryWriter(log_dir=path)
+    def __init__(self, path, name = None):
+        self.writer = SummaryWriter(log_dir=os.path.join(path, 'log/'))
+
+        logFormatter = logging.Formatter("%(asctime)s : %(message)s")
+        if name is not None:
+            self.logger = logging.getLogger(name)
+        else:
+            self.logger = logging.getLogger(path)
+
+        fileHandler = logging.FileHandler(os.path.join(path, 'log.txt'))
+        fileHandler.setFormatter(logFormatter)
+        self.logger.addHandler(fileHandler)
+
+        consoleHandler = logging.StreamHandler()
+        consoleHandler.setFormatter(logFormatter)
+        self.logger.addHandler(consoleHandler)
+
+    def set_level(self, level = 'debug'):
+        level_dict = {'debug': logging.DEBUG, 'info': logging.INFO, 'warning': logging.WARNING, 'error': logging.ERROR, 'critical': logging.CRITICAL}
+        self.logger.setLevel(level_dict[level])
+
+    def get_logger(self):
+        return self.logger
 
     def add_loss_vs_batch(self, kv_dict, batch_index):
         for k, v in kv_dict.items():
             writer.add_scalar('loss_tracking/' + k, v, batch_index)
+            self.logger.info("%s : %s", k, v)
 
     def add_model_parameter_stats(self, model, batch_index, save=False):
         if save:

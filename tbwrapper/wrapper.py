@@ -3,6 +3,7 @@ from tensorboardX import SummaryWriter
 import torch
 import logging
 import os
+import json
 
 # DEBUG > INFO > WARNING > ERROR > CRITICAL    
 # logging.basicConfig(format='%(asctime)s : %(message)s', level=logging.DEBUG)
@@ -10,21 +11,25 @@ import os
 class wrapper():
 
     def __init__(self, path, name = None):
+        self.path = path
+
         self.writer = SummaryWriter(log_dir=os.path.join(path, 'log/'))
 
-        logFormatter = logging.Formatter("%(asctime)s : %(message)s")
         if name is not None:
             self.logger = logging.getLogger(name)
         else:
             self.logger = logging.getLogger(path)
-
+        logFormatter = logging.Formatter("%(asctime)s : %(message)s")
         fileHandler = logging.FileHandler(os.path.join(path, 'log.txt'))
         fileHandler.setFormatter(logFormatter)
         self.logger.addHandler(fileHandler)
-
         consoleHandler = logging.StreamHandler()
         consoleHandler.setFormatter(logFormatter)
         self.logger.addHandler(consoleHandler)
+
+    def save_configue(self, config):
+        with open(os.path.join(path, 'config.json'), 'w') as fout:
+            json.dump(vars(config), fout)
 
     def set_level(self, level = 'debug'):
         level_dict = {'debug': logging.DEBUG, 'info': logging.INFO, 'warning': logging.WARNING, 'error': logging.ERROR, 'critical': logging.CRITICAL}

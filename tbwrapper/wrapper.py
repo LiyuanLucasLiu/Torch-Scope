@@ -80,7 +80,7 @@ class wrapper():
         environments = {
             "PATH": path,
             "RANDOM SEED": seed,
-            "SYS ENVIRONMENT:" vars(os.environ),
+            "SYS ENVIRONMENT": vars(os.environ),
             "COMMAND": sys.argv, 
             "INSTALLED PACKAGES": subprocess.check_output(["pip", "freeze"], universal_newlines=True).strip()
         }

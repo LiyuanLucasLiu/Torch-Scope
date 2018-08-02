@@ -1,9 +1,9 @@
 wrapper package
-=============
+==========================
 
 .. automodule:: tbwrapper
 
-.. autoclass:: wrapper.wrapper
+.. autoclass:: wrapper
 	:members:
 
 	.. automethod:: __init__

@@ -1,10 +1,9 @@
 wrapper package
 =============
 
-tbwrapper\.wrapper module
------------------
+.. automodule:: tbwrapper
 
-.. automodule:: wrapper.wrapper
-    :members:
-    :undoc-members:
-    :show-inheritance:
+.. autoclass:: wrapper
+	:members:
+
+	.. automethod:: __init__

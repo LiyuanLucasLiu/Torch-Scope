@@ -15,7 +15,8 @@ import subprocess
 
 import random
 import numpy
-
+import torch
+        
 class wrapper():
     """
     
@@ -26,6 +27,19 @@ class wrapper():
     1. Tracking environments, dependency, implementations and checkpoints;
     2. Logger wrapper with two handlers;
     3. tensorboard wrapper
+
+    Parameters
+    ----------
+    path : ``str``, required.
+        Output path for logger, checkpoint, ...
+    name : ``str``, optional, (default=path).
+        Name for the experiment,
+    seed: ``int``, optional.
+        The random seed (would be random generated if not provided).
+    enable_git_track: ``bool``, optional
+        If True, track the implementation with git (would automatically commit tracked files).
+    checkpoints_to_keep : ``int``, optional, (default=1).
+        Number of checkpoints.
     """
     def __init__(self, 
                 path: str, 
@@ -33,23 +47,7 @@ class wrapper():
                 seed: int = None,
                 enable_git_track: bool = False,
                 checkpoints_to_keep: int = 1):
-        """
-        Parameters
-        ----------
-        path : ``str``, required.
-            Output path for logger, checkpoint, ...
-        name : ``str``, optional, (default=path).
-            Name for the experiment,
-        seed: ``int``, optional.
-            The random seed (would be random generated if not provided).
-        enable_git_track: ``bool``, optional
-            If True, track the implementation with git (would automatically commit tracked files).
-        checkpoints_to_keep : ``int``, optional, (default=1).
-            Number of checkpoints.
-        """
 
-        import torch
-        
         self.path = path
         self.checkpoints_to_keep = checkpoints_to_keep
         self.counter = 0

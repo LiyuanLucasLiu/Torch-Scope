@@ -1,13 +1,10 @@
 wrapper package
 =============
 
-Methods
-----------
-
 model\.wrapper module
 -----------------
 
-.. automodule:: wrapper
+.. automodule:: wrapper.wrapper
     :members:
     :undoc-members:
     :show-inheritance:

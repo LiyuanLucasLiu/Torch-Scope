@@ -5,7 +5,6 @@
 """
 
 from tensorboardX import SummaryWriter
-import torch
 import logging
 import os
 import sys
@@ -49,6 +48,8 @@ class wrapper():
             Number of checkpoints.
         """
 
+        import torch
+        
         self.path = path
         self.checkpoints_to_keep = checkpoints_to_keep
         self.counter = 0

@@ -9,8 +9,6 @@ with open('HISTORY.rst') as history_file:
 
 requirements = [
     'numpy',
-    'protobuf >= 0.3.2',
-    'six',
     'tensorboardX',
     'gitpython',
     'pytorch=0.4.0'

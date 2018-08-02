@@ -15,14 +15,7 @@ Toolkit wrapper for experiments based on pytorch, which has three features:
 3. tensorboard wrapper
 
 .. toctree::
-   :glob:
-   :maxdepth: 1
-   :caption: Notes
-
-   notes/*
-
-.. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
    :caption: Package Reference
 
    wrapper

@@ -11,7 +11,7 @@ requirements = [
     'numpy',
     'tensorboardX',
     'gitpython',
-    'pytorch=0.4.0'
+    'torch==0.4.0'
 ]
 
 setup(

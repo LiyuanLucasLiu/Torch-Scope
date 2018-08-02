@@ -31,7 +31,8 @@ An example is provided as below, please read the doc for a detailed api explaina
 * use tensorboard to track the model stats (tensorboard --logdir PATH/log/ --port ####)
 
 ```
-import wrapper
+from tbwrapper import wrapper
+...
 
 if __name__ == '__main__':
 

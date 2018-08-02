@@ -11,7 +11,8 @@ requirements = [
     'numpy',
     'protobuf >= 0.3.2',
     'six',
-    'tensorboardX'
+    'tensorboardX',
+    'gitpython'
 ]
 
 setup(

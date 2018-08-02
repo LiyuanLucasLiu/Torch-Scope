@@ -180,4 +180,4 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
-autodoc_mock_imports = ['numpy', 'tensorboardX', 'gitpython', 'pytorch=0.4.0']
+autodoc_mock_imports = ['numpy', 'tensorboardX', 'git', 'torch']

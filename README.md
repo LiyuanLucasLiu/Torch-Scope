@@ -3,11 +3,11 @@
 [![Documentation Status](https://readthedocs.org/projects/tensorboard-wrapper/badge/?version=latest)](http://tensorboard-wrapper.readthedocs.io/en/latest/?badge=latest)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-Toolkit wrapper for experiments based on pytorch, which has three features:
+A Toolkit for training models based on pytorch, which has three features:
 
 1. Tracking environments, dependency, implementations and checkpoints;
 2. Providing a logger wrapper with two handlers (to ```std``` and ```file```);
-3. tensorboard wrapper
+3. Providing a tensorboard wrapper
 
 ## Quick Links
 

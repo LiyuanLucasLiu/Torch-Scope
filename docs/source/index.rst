@@ -8,11 +8,11 @@
 Wrapper documentation
 =========================
 
-Toolkit wrapper for experiments based on pytorch, which has three features:
+A Toolkit for training models based on pytorch, which has three features:
 
 1. Tracking environments, dependency, implementations and checkpoints;
 2. Providing a logger wrapper with two handlers (to ```std``` and ```file```);
-3. tensorboard wrapper
+3. Providing a tensorboard wrapper
 
 .. toctree::
    :maxdepth: 2

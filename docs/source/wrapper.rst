@@ -1,7 +1,7 @@
 wrapper package
 =============
 
-model\.wrapper module
+tbwrapper\.wrapper module
 -----------------
 
 .. automodule:: wrapper.wrapper

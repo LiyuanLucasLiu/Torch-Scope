@@ -3,7 +3,7 @@ wrapper package
 
 .. automodule:: tbwrapper
 
-.. autoclass:: wrapper
+.. autoclass:: wrapper.wrapper
 	:members:
 
 	.. automethod:: __init__

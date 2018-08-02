@@ -41,6 +41,7 @@ extensions = [
     'sphinx.ext.mathjax',
     'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
+    'sphinx.ext.githubpages'
 ]
 
 napoleon_use_ivar = True
@@ -129,7 +130,7 @@ html_sidebars = {
 # -- Options for HTMLHelp output ------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'Wrapper doc'
+htmlhelp_basename = 'Wrapperdoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 

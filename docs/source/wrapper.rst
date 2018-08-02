@@ -1,6 +1,9 @@
 wrapper package
 ==========================
 
+tbwrapper\.wrapper module
+--------------------------
+
 .. automodule:: tbwrapper
 
 .. autoclass:: wrapper

@@ -129,7 +129,7 @@ class wrapper():
         
         size = int(size)
         suffix = suffix.lower()
-        elif suffix == 'kb' or suffix == 'kib':
+        if suffix == 'kb' or suffix == 'kib':
             return size << 10
         elif suffix == 'mb' or suffix == 'mib':
             return size << 20

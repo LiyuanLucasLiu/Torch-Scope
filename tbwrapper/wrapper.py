@@ -4,6 +4,7 @@
 .. moduleauthor:: Liyuan Liu
 """
 
+from typing import Dict
 from tensorboardX import SummaryWriter
 import logging
 import os

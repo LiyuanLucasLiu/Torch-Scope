@@ -78,7 +78,7 @@ class wrapper():
         environments = {
             "PATH": path,
             "RANDOM SEED": seed,
-            "SYS ENVIRONMENT": vars(os.environ),
+            "SYS ENVIRONMENT": {k.decode('utf-8'): v.decode('utf-8') for k, v in os.environ._data.items()},
             "COMMAND": sys.argv, 
             "INSTALLED PACKAGES": subprocess.check_output(["pip", "freeze"], universal_newlines=True).strip()
         }
@@ -100,10 +100,16 @@ class wrapper():
         with open(os.path.join(self.path, 'environ.json'), 'w') as fout:
             json.dump(environments, fout)
 
-    @staticmethod
-    def nvidia_memory_map():
+    def nvidia_memory_map(self):
         """
-        Return the memory map (from gpu index to used memory) from nvidia-smi.
+        Get the current GPU memory usage.
+        Based on https://discuss.pytorch.org/t/access-gpu-memory-usage-in-pytorch/3192/4
+        
+        Returns
+        -------
+        Memory_map: ``Dict[int, str]``
+            Keys are device ids as integers.
+            Values are memory usage as integers in MB.
         """
         result = subprocess.check_output(['nvidia-smi', '--query-gpu=memory.used',
                     '--format=csv,noheader'], encoding='utf-8')
@@ -111,7 +117,7 @@ class wrapper():
         gpu_memory_map = dict(zip(range(len(gpu_memory)), gpu_memory))
         return gpu_memory_map
 
-    def get_bytes(size, suffix = ''):
+    def get_bytes(self, size, suffix = ''):
         """
         Convert other memory size to bytes
 
@@ -139,7 +145,7 @@ class wrapper():
         self.logger.error("Suffix uncognized: {}".format(suffix))
         return False
 
-    def auto_device():
+    def auto_device(self):
         """
         Automatically choose the gpu (would return the gpu index with minimal used gpu memory).
         """
@@ -153,47 +159,19 @@ class wrapper():
             self.logger.info("GPU memory usages:")
             minimal_usage = float('inf')
             gpu_index = -1
-            for k, v in memory_list:
+            for k, v in memory_list.items():
                 self.logger.info("GPU {}: {}".format(k, v))
 
                 v = v.split()
                 v = self.get_bytes(v[0], v[1])
+
                 if v <= minimal_usage:
                     minimal_usage = v
                     gpu_index = k
 
-            return k
+            return gpu_index
         else:
             return -1
-
-    def gpu_memory_mb() -> Dict[int, int]:
-        """
-        Get the current GPU memory usage.
-        Based on https://discuss.pytorch.org/t/access-gpu-memory-usage-in-pytorch/3192/4
-
-        Returns
-        -------
-        ``Dict[int, int]``
-            Keys are device ids as integers.
-            Values are memory usage as integers in MB.
-            Returns an empty ``dict`` if GPUs are not available.
-        """
-        # pylint: disable=bare-except
-        try:
-            result = subprocess.check_output(['nvidia-smi', '--query-gpu=memory.used',
-                                              '--format=csv,nounits,noheader'],
-                                             encoding='utf-8')
-            gpu_memory = [int(x) for x in result.strip().split('\n')]
-            return {gpu: memory for gpu, memory in enumerate(gpu_memory)}
-        except FileNotFoundError:
-            # `nvidia-smi` doesn't exist, assume that means no GPU.
-            return {}
-        except:
-            # Catch *all* exceptions, because this memory check is a nice-to-have
-            # and we'd never want a training run to fail because of it.
-            logger.exception("unable to check gpu_memory_mb(), continuing")
-            return {}
-
             
     def save_configue(self, config):
         """

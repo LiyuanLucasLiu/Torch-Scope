@@ -3,20 +3,17 @@
     :synopsis: wrapper
 .. moduleauthor:: Liyuan Liu
 """
-
-from typing import Dict
-from tensorboardX import SummaryWriter
-import logging
 import os
+import git
 import sys
 import json
-
-import git
-import subprocess
-
-import random
 import numpy
 import torch
+import random
+import logging
+import subprocess
+from typing import Dict
+from tensorboardX import SummaryWriter
         
 class wrapper():
     """
@@ -102,6 +99,72 @@ class wrapper():
 
         with open(os.path.join(self.path, 'environ.json'), 'w') as fout:
             json.dump(environments, fout)
+
+    @staticmethod
+    def nvidia_memory_map():
+        """
+        Return the memory map (from gpu index to used memory) from nvidia-smi.
+        """
+        result = subprocess.check_output(['nvidia-smi', '--query-gpu=memory.used',
+                    '--format=csv,noheader'], encoding='utf-8')
+        gpu_memory = result.strip().split('\n')
+        gpu_memory_map = dict(zip(range(len(gpu_memory)), gpu_memory))
+        return gpu_memory_map
+
+    def get_bytes(size, suffix = ''):
+        """
+        Convert other memory size to bytes
+
+        Parameters
+        ----------
+        size: ``str``, required.
+            The numeric part of the memory size.
+        suffix: ``str``, optional (default='').
+            The unit of the memory size.
+        """
+        size = float(size)
+
+        if not suffix or suffix.isspace():
+            return size
+        
+        size = int(size)
+        suffix = suffix.lower()
+        elif suffix == 'kb' or suffix == 'kib':
+            return size << 10
+        elif suffix == 'mb' or suffix == 'mib':
+            return size << 20
+        elif suffix == 'gb' or suffix == 'gib':
+            return size << 30
+
+        self.logger.error("Suffix uncognized: {}".format(suffix))
+        return False
+
+    def auto_device():
+        """
+        Automatically choose the gpu (would return the gpu index with minimal used gpu memory).
+        """
+        if torch.cuda.is_available():
+            if "PCI_BUS_ID" != os.environ["CUDA_DEVICE_ORDER"]:
+                self.logger.warning("It's recommended to set ``CUDA_DEVICE_ORDER`` \
+                            to be ``PCI_BUS_ID`` by ``export CUDA_DEVICE_ORDER=PCI_BUS_ID``; \
+                            otherwise, it's not guaranteed that the gpu index from \
+                            pytorch to be consistent the ``nvidia-smi`` results. ")
+            memory_list = self.nvidia_memory_map()
+            self.logger.info("GPU memory usages:")
+            minimal_usage = float('inf')
+            gpu_index = -1
+            for k, v in memory_list:
+                self.logger.info("GPU {}: {}".format(k, v))
+
+                v = v.split()
+                v = self.get_bytes(v[0], v[1])
+                if v <= minimal_usage:
+                    minimal_usage = v
+                    gpu_index = k
+
+            return k
+        else:
+            return -1
 
     def gpu_memory_mb() -> Dict[int, int]:
         """

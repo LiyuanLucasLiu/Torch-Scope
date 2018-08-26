@@ -40,10 +40,14 @@ if __name__ == '__main__':
 
     parser.add_argument('--checkpoint_path', type=str, ...)
     parser.add_argument('--name', type=str, ...)
+    parser.add_argument('--gpu', type=str, ...)
     ...
     args = parser.parse_args()
 
     wp = wrapper(os.path.join(args.checkpoint_path, args.name), name = args.log_dir, enable_git_track = True)
+
+    gpu_index = tbw.auto_device() if 'auto' == args.gpu else int(args.gpu)
+    device = torch.device("cuda:" + str(gpu_index) if gpu_index >= 0 else "cpu")
 
     wp.save_configue(args) # dump the config to config.json
 

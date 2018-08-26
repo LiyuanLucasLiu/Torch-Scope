@@ -75,6 +75,7 @@ class wrapper():
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(seed)
 
+        self.logger.info("Saving up system environemnt and python packages")
         environments = {
             "PATH": path,
             "RANDOM SEED": seed,
@@ -84,16 +85,16 @@ class wrapper():
         }
 
         if enable_git_track:
-            self.logger.info("setting up git tracker")
+            self.logger.info("Setting up git tracker")
             repo = git.Repo('.', search_parent_directories=True)
-            self.logger.debug("git root path: %s", repo.git.rev_parse("--show-toplevel"))
-            self.logger.debug("git branch: %s", repo.active_branch.name)
+            self.logger.debug("Git root path: %s", repo.git.rev_parse("--show-toplevel"))
+            self.logger.debug("Git branch: %s", repo.active_branch.name)
 
             if repo.is_dirty():
                 repo.git.add(u=True)
                 repo.git.commit(m='experiment checkpoint for: {}'.format(self.name))
 
-            self.logger.debug("git commit: %s", repo.head.commit.hexsha)
+            self.logger.debug("Git commit: %s", repo.head.commit.hexsha)
             
             environments['GIT HEAD COMMIT'] = repo.head.commit.hexsha
 
@@ -173,14 +174,16 @@ class wrapper():
         else:
             return -1
             
-    def save_configue(self, config):
+    def save_configue(self, config, name='config.json'):
         """
         Save config dict to the ``config.json`` under the path.
 
         Parameters
         ----------
-        config: required.
-            config file (supporting dict, Namespace, ...)
+        config: ``dict``, required.
+            Config file (supporting dict, Namespace, ...)
+        name: ``str``, optional, (default = "config.json").
+            Name for the configuration name.
         """
         if type(config) is not dict:
             config = vars(config)
@@ -276,7 +279,7 @@ class wrapper():
 
     def set_level(self, level = 'debug'):
         """
-        set the level of logging.
+        Set the level of logging.
 
         Parameters
         ----------
@@ -289,24 +292,30 @@ class wrapper():
 
     def get_logger(self):
         """
-        return the logger.
-
+        Return the logger.
         """
         return self.logger
 
     def get_writer(self):
         """
-        return the tensorboard writer.
-
+        Return the tensorboard writer.
         """
         return self.writer
+
+    def close(self):
+        """
+        Close the tensorboard writer and the logger.
+        """
+        self.writer.close()
+        self.logger.close()
 
     def add_loss_vs_batch(self, 
                         kv_dict: dict, 
                         batch_index: int, 
-                        add_log: bool = True):
+                        add_log: bool = True,
+                        add_writer: bool = True):
         """
-        add loss to the ``loss_tracking`` section in the tensorboard.
+        Add loss to the ``loss_tracking`` section in the tensorboard.
 
         Parameters
         ----------
@@ -315,10 +324,11 @@ class wrapper():
         batch_index: ``int``, required.
             Index of the added loss.
         add_log: ``bool``, optional, (default = True).
-            whether to plot the information in the log.
+            Whether to plot the information in the log.
         """
         for k, v in kv_dict.items():
-            self.writer.add_scalar('loss_tracking/' + k, v, batch_index)
+            if add_writer:
+                self.writer.add_scalar('loss_tracking/' + k, v, batch_index)
             if add_log:
                 self.logger.info("%s : %s", k, v)
 
@@ -327,7 +337,7 @@ class wrapper():
                                     batch_index: int,
                                     save: bool = False):
         """
-        add parameter stats to the ``parameter_*`` sections in the tensorboard.
+        Add parameter stats to the ``parameter_*`` sections in the tensorboard.
 
         Parameters
         ----------
@@ -336,7 +346,7 @@ class wrapper():
         batch_index: ``int``, required.
             Index of the model parameters stats.
         save: ``bool``, optional, (default = False).
-            whether to save the model parameters (for the method ``add_model_update_stats``).
+            Whether to save the model parameters (for the method ``add_model_update_stats``).
         """
         if save:
             self.param_updates = {name: param.clone().detach().cpu() for name, param in model.named_parameters()}
@@ -360,7 +370,7 @@ class wrapper():
                                 model: torch.nn.Module, 
                                 batch_index: int):
         """
-        add parameter update stats to the ``parameter_gradient_update`` sections in the tensorboard.
+        Add parameter update stats to the ``parameter_gradient_update`` sections in the tensorboard.
 
         Parameters
         ----------
@@ -383,7 +393,7 @@ class wrapper():
                                         model: torch.nn.Module, 
                                         batch_index: int):
         """
-        add parameter histogram in the tensorboard.
+        Add parameter histogram in the tensorboard.
 
         Parameters
         ----------
@@ -394,4 +404,4 @@ class wrapper():
         """
         for name, param in model.named_parameters():
             if param.requires_grad:
-                self.writer.add_train_histogram("parameter_histogram/" + name, param.clone().detach().cpu().data.numpy(), batch_index)
+                self.writer.add_histogram("parameter_histogram/" + name, param.clone().detach().cpu().data.numpy(), batch_index)

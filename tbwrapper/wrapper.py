@@ -166,7 +166,7 @@ class wrapper():
                 v = v.split()
                 v = self.get_bytes(v[0], v[1])
 
-                if v <= minimal_usage:
+                if v < minimal_usage:
                     minimal_usage = v
                     gpu_index = k
 

@@ -5,9 +5,10 @@
 
 A Toolkit for training pytorch models, which has three features:
 
-1. Tracking environments, dependency, implementations and checkpoints;
-2. Providing a logger wrapper with two handlers (to ```std``` and ```file```);
-3. Providing a tensorboard wrapper
+- Tracking environments, dependency, implementations and checkpoints;
+- Providing a logger wrapper with two handlers (to ```std``` and ```file```);
+- Supporting automatic device selection;
+- Providing a tensorboard wrapper;
 
 We are in an early-release beta. Expect some adventures and rough edges.
 

@@ -9,6 +9,8 @@ A Toolkit for training pytorch models, which has three features:
 2. Providing a logger wrapper with two handlers (to ```std``` and ```file```);
 3. Providing a tensorboard wrapper
 
+We are in an early-release beta. Expect some adventures and rough edges.
+
 ## Quick Links
 
 - [Installation](#installation)

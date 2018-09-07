@@ -34,7 +34,7 @@ An example is provided as below, please read the doc for a detailed api explaina
 * use tensorboard to track the model stats (tensorboard --logdir PATH/log/ --port ####)
 
 ```
-from tbwrapper import wrapper
+from pyscope import wrapper
 ...
 
 if __name__ == '__main__':
@@ -47,19 +47,18 @@ if __name__ == '__main__':
     ...
     args = parser.parse_args()
 
-    wp = wrapper(os.path.join(args.checkpoint_path, args.name), name = args.log_dir, enable_git_track = False)
+    pw = wrapper(os.path.join(args.checkpoint_path, args.name), name = args.log_dir, enable_git_track = False)
     # Or if the current folder is binded with git, you can turn on the git tracking
-    # wp = wrapper(os.path.join(args.checkpoint_path, args.name), name = args.log_dir, enable_git_track = True)
+    # pw = wrapper(os.path.join(args.checkpoint_path, args.name), name = args.log_dir, enable_git_track = True)
 
     gpu_index = tbw.auto_device() if 'auto' == args.gpu else int(args.gpu)
     device = torch.device("cuda:" + str(gpu_index) if gpu_index >= 0 else "cpu")
 
-    wp.save_configue(args) # dump the config to config.json
+    pw.save_configue(args) # dump the config to config.json
 
-    wp.set_level('info') # or 'debug', etc.
-    logger = wp.get_logger()
+    pw.set_level('info') # or 'debug', etc.
 
-    logger.info(str(args)) # would be plotted to std & file if level is 'info' or lower
+    pw.info(str(args)) # would be plotted to std & file if level is 'info' or lower
 
     ...
 
@@ -77,10 +76,10 @@ if __name__ == '__main__':
     		loss.backward()
 
     		if batch_index % ... = 0:
-    			wp.add_loss_vs_batch({'loss': tot_loss / ..., ...}, batch_index, False)
-    			wp.add_model_parameter_stats(model, batch_index, save=True)
+    			pw.add_loss_vs_batch({'loss': tot_loss / ..., ...}, batch_index, False)
+    			pw.add_model_parameter_stats(model, batch_index, save=True)
     			optimizer.step()
-    			wp.add_model_update_stats(model, batch_index)
+    			pw.add_model_update_stats(model, batch_index)
     			tot_loss = 0
     		else:
     			optimizer.step()
@@ -88,11 +87,11 @@ if __name__ == '__main__':
     		batch_index += 1
 
     	dev_score = ...
-    	wp.add_loss_vs_batch({'dev_score': dev_score, ...}, index, True)
+    	pw.add_loss_vs_batch({'dev_score': dev_score, ...}, index, True)
 
     	if dev_score > best_score:
-    		wp.save_checkpoint(model, optimizer, is_best = True)
+    		pw.save_checkpoint(model, optimizer, is_best = True)
     		best_score = dev_score
     	else:
-    		wp.save_checkpoint(model, optimizer, is_best = False)
+    		pw.save_checkpoint(model, optimizer, is_best = False)
 ```

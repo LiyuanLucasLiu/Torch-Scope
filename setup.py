@@ -11,12 +11,12 @@ requirements = [
     'numpy',
     'tensorboardX',
     'gitpython',
-    'torch==0.4.0'
+    'torch'
 ]
 
 setup(
-    name='PyScope',
-    version='0.1',
+    name='torch-scope',
+    version='0.1.0',
     description='A Toolkit for Training, Tracking and Saving Models',
     long_description= history,
     author='Lucas Liu',

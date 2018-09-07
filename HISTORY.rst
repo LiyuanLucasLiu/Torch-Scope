@@ -1,7 +1,9 @@
 History
 =======
-0.1 (2018-07-19)
+
+0.1 (2017-06-13)
 ------------------
-* First commit. Reference:
-https://github.com/lanpa/tensorboardX
-https://github.com/allenai/allennlp
+* Support Environment Tracking;
+* Provide logger wrapper;
+* Provide tensorboardX wrapper;
+* Support auto-device; 

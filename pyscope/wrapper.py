@@ -46,6 +46,9 @@ class wrapper():
                 enable_git_track: bool = False,
                 checkpoints_to_keep: int = 1):
 
+        if not self.confirm_an_empty_path(path):
+            sys.exit()
+
         self.path = path
         self.checkpoints_to_keep = checkpoints_to_keep
         self.counter = 0
@@ -59,7 +62,7 @@ class wrapper():
             self.name = path
             self.logger = logging.getLogger(path)
 
-        logFormatter = logging.Formatter("%(asctime)s : %(message)s")
+        logFormatter = logging.Formatter("%(asctime)s : %(message)s", "%Y-%m-%d %H:%M:%S")
         fileHandler = logging.FileHandler(os.path.join(path, 'log.txt'))
         fileHandler.setFormatter(logFormatter)
         self.logger.addHandler(fileHandler)
@@ -101,21 +104,54 @@ class wrapper():
         with open(os.path.join(self.path, 'environ.json'), 'w') as fout:
             json.dump(environments, fout)
 
-    def nvidia_memory_map(self):
+    def confirm_an_empty_path(self, path):
+        if os.path.exists(path):
+            self.logger.critical("Checkpoint Folder Already Exists: {}".format(path))
+            self.logger.critical("Input 'yes' to confirm deleting this folder; or 'no' to exit.")
+            while True:
+                action = input("yes for delete or no for exit:").lower()
+                if 'yes' == action:
+                    os.rmdir(path)
+                    return True
+                elif 'no' == action:
+                    return False
+                else:
+                    self.logger.critical("Only 'yes' or 'no' are acceptable.")
+        return True
+
+    def nvidia_memory_map(self, add_log = True):
         """
         Get the current GPU memory usage.
         Based on https://discuss.pytorch.org/t/access-gpu-memory-usage-in-pytorch/3192/4
-        
+
+        Parameters
+        ----------
+        add_log: ``bool``, optional, (default = True).
+            Whether to add the information in the log.
+
         Returns
         -------
         Memory_map: ``Dict[int, str]``
             Keys are device ids as integers.
             Values are memory usage as integers in MB.
         """
-        result = subprocess.check_output(['nvidia-smi', '--query-gpu=memory.used',
+        if "PCI_BUS_ID" != os.environ["CUDA_DEVICE_ORDER"]:
+            self.logger.warning("It's recommended to set ``CUDA_DEVICE_ORDER`` \
+                        to be ``PCI_BUS_ID`` by ``export CUDA_DEVICE_ORDER=PCI_BUS_ID``; \
+                        otherwise, it's not guaranteed that the gpu index from \
+                        pytorch to be consistent the ``nvidia-smi`` results. ")
+
+        result = subprocess.check_output(['nvidia-smi', '--query-gpu=memory.used,utilization.gpu',
                     '--format=csv,noheader'], encoding='utf-8')
         gpu_memory = result.strip().split('\n')
-        gpu_memory_map = dict(zip(range(len(gpu_memory)), gpu_memory))
+        gpu_memory_map = {x: y.split(',') for x, y in zip(range(len(gpu_memory)), gpu_memory)}
+
+        if add_log:
+            self.logger.info("GPU memory usages:")
+            self.logger.info("GPU ID: Mem\t Utils")
+            for k, v in gpu_memory_map.items():
+                self.logger.info("GPU  {}: {}\t {}".format(k, v[0], v[1]))
+
         return gpu_memory_map
 
     def get_bytes(self, size, suffix = ''):
@@ -146,30 +182,32 @@ class wrapper():
         self.logger.error("Suffix uncognized: {}".format(suffix))
         return False
 
-    def auto_device(self):
+    def auto_device(self, metrics='memory'):
         """
         Automatically choose the gpu (would return the gpu index with minimal used gpu memory).
+
+        Parameters
+        __________
+        metrics: ``str``, optional, (default='memory').
+            metric for gpu selection, supporting ``memory`` (used memory) and ``utils``.
         """
+        assert (metrics == 'memory' or metrics == 'utils')
+
         if torch.cuda.is_available():
-            if "PCI_BUS_ID" != os.environ["CUDA_DEVICE_ORDER"]:
-                self.logger.warning("It's recommended to set ``CUDA_DEVICE_ORDER`` \
-                            to be ``PCI_BUS_ID`` by ``export CUDA_DEVICE_ORDER=PCI_BUS_ID``; \
-                            otherwise, it's not guaranteed that the gpu index from \
-                            pytorch to be consistent the ``nvidia-smi`` results. ")
             memory_list = self.nvidia_memory_map()
-            self.logger.info("GPU memory usages:")
             minimal_usage = float('inf')
             gpu_index = -1
             for k, v in memory_list.items():
-                self.logger.info("GPU {}: {}".format(k, v))
-
-                v = v.split()
-                v = self.get_bytes(v[0], v[1])
+                if 'memory' == metrics:
+                    v = v[0].split()
+                    v = self.get_bytes(v[0], v[1])
+                else:
+                    v = float(v[1].replace('%', ''))
 
                 if v < minimal_usage:
                     minimal_usage = v
                     gpu_index = k
-
+            self.logger.info("Recommended GPU Index: {}".format(gpu_index))
             return gpu_index
         else:
             return -1
@@ -277,6 +315,36 @@ class wrapper():
         """
         return torch.load(file_path, map_location=lambda storage, loc: storage)
 
+    def debug(self, *args, **kargs):
+        """
+        Add debug to logger
+        """
+        self.logger.debug(*args, **kargs)
+
+    def info(self, *args, **kargs):
+        """
+        Add info to logger
+        """
+        self.logger.info(*args, **kargs)
+    
+    def warning(self, *args, **kargs):
+        """
+        Add warning to logger
+        """
+        self.logger.warning(*args, **kargs)
+    
+    def error(self, *args, **kargs):
+        """
+        Add error to logger
+        """
+        self.logger.error(*args, **kargs)
+    
+    def critical(self, *args, **kargs):
+        """
+        Add critical to logger
+        """
+        self.logger.critical(*args, **kargs)
+
     def set_level(self, level = 'debug'):
         """
         Set the level of logging.
@@ -324,7 +392,7 @@ class wrapper():
         batch_index: ``int``, required.
             Index of the added loss.
         add_log: ``bool``, optional, (default = True).
-            Whether to plot the information in the log.
+            Whether to print the information in the log.
         """
         for k, v in kv_dict.items():
             if add_writer:

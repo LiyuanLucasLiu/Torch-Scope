@@ -2,4 +2,4 @@ wrapper package
 ==========================
 
 .. automodule:: torch_scope.wrapper
-	:members:
+	:members:git

@@ -17,7 +17,7 @@ requirements = [
 setup(
     name='torch-scope',
     version='0.1.0',
-    description='A Toolkit for Training, Tracking and Saving Models',
+    description='A Toolkit for Training, Tracking and Saving PyTorch Models',
     long_description= history,
     author='Lucas Liu',
     author_email='llychinalz@gmail.com',
@@ -25,12 +25,11 @@ setup(
     packages=find_packages(exclude=['docs']),
     include_package_data=True,
     install_requires=requirements,
-    license='MIT license',
+    license='Apache License 2.0',
     zip_safe=False,
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: MIT License',
         'Natural Language :: English',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',        

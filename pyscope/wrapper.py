@@ -9,6 +9,7 @@ import sys
 import json
 import numpy
 import torch
+import shutil
 import random
 import logging
 import subprocess
@@ -45,16 +46,7 @@ class wrapper():
                 seed: int = None,
                 enable_git_track: bool = False,
                 checkpoints_to_keep: int = 1):
-
-        if not self.confirm_an_empty_path(path):
-            sys.exit()
-
-        self.path = path
-        self.checkpoints_to_keep = checkpoints_to_keep
-        self.counter = 0
-
-        self.writer = SummaryWriter(log_dir=os.path.join(path, 'log/'))
-
+        # stream logger
         if name is not None:
             self.name = name
             self.logger = logging.getLogger(name)
@@ -63,12 +55,35 @@ class wrapper():
             self.logger = logging.getLogger(path)
 
         logFormatter = logging.Formatter("%(asctime)s : %(message)s", "%Y-%m-%d %H:%M:%S")
-        fileHandler = logging.FileHandler(os.path.join(path, 'log.txt'))
-        fileHandler.setFormatter(logFormatter)
-        self.logger.addHandler(fileHandler)
         consoleHandler = logging.StreamHandler()
         consoleHandler.setFormatter(logFormatter)
         self.logger.addHandler(consoleHandler)
+        self.logger.setLevel(logging.INFO)
+
+        # check path
+        if os.path.exists(path):
+            self.logger.critical("Checkpoint Folder Already Exists: {}".format(path))
+            self.logger.critical("Input 'yes' to confirm deleting this folder; or 'no' to exit.")
+            delete_folder = False
+            while not delete_folder:
+                action = input("yes for delete or no for exit:").lower()
+                if 'yes' == action:
+                    shutil.rmtree(path)
+                    delete_folder = True
+                elif 'no' == action:
+                    sys.exit()
+                else:
+                    self.logger.critical("Only 'yes' or 'no' are acceptable.")
+
+        # file logger
+        self.path = path
+        self.checkpoints_to_keep = checkpoints_to_keep
+        self.counter = 0
+
+        self.writer = SummaryWriter(log_dir=os.path.join(path, 'log/'))
+        fileHandler = logging.FileHandler(os.path.join(path, 'log.txt'))
+        fileHandler.setFormatter(logFormatter)
+        self.logger.addHandler(fileHandler)
 
         if seed is None:
             seed = random.randint(1, 10000)
@@ -111,7 +126,7 @@ class wrapper():
             while True:
                 action = input("yes for delete or no for exit:").lower()
                 if 'yes' == action:
-                    os.rmdir(path)
+                    shutil.rmtree(path)
                     return True
                 elif 'no' == action:
                     return False

@@ -1,4 +1,4 @@
-# tensorboard-wrapper
+# PyScope
 
 [![Documentation Status](https://readthedocs.org/projects/tensorboard-wrapper/badge/?version=latest)](http://tensorboard-wrapper.readthedocs.io/en/latest/?badge=latest)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -19,10 +19,19 @@ We are in an early-release beta. Expect some adventures and rough edges.
 
 ## Installation
 
+To install via pipy:
+```
+pip install torch-scope
+```
+
 To build from source:
 ```
-git clone https://github.com/LiyuanLucasLiu/tensorboard-wrapper.git
-cd tensorboard-wrapper
+pip install git+https://github.com/LiyuanLucasLiu/PyScope
+```
+or
+```
+git clone https://github.com/LiyuanLucasLiu/PyScope.git
+cd PyScope
 python setup.py install
 ```
 

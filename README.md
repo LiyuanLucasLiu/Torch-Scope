@@ -47,7 +47,9 @@ if __name__ == '__main__':
     ...
     args = parser.parse_args()
 
-    wp = wrapper(os.path.join(args.checkpoint_path, args.name), name = args.log_dir, enable_git_track = True)
+    wp = wrapper(os.path.join(args.checkpoint_path, args.name), name = args.log_dir, enable_git_track = False)
+    # Or if the current folder is binded with git, you can turn on the git tracking
+    # wp = wrapper(os.path.join(args.checkpoint_path, args.name), name = args.log_dir, enable_git_track = True)
 
     gpu_index = tbw.auto_device() if 'auto' == args.gpu else int(args.gpu)
     device = torch.device("cuda:" + str(gpu_index) if gpu_index >= 0 else "cpu")

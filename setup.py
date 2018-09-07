@@ -15,13 +15,13 @@ requirements = [
 ]
 
 setup(
-    name='tensorboard-wrapper',
+    name='PyScope',
     version='0.1',
-    description='wrapper of TensorBoardX for pytorch models',
+    description='A Toolkit for Training, Tracking and Saving Models',
     long_description= history,
     author='Lucas Liu',
     author_email='llychinalz@gmail.com',
-    url='https://github.com/LiyuanLucasLiu/tensorboard-wrapper',
+    url='https://github.com/LiyuanLucasLiu/PyScope',
     packages=find_packages(exclude=['docs']),
     include_package_data=True,
     install_requires=requirements,

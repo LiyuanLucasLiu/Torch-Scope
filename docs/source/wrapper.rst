@@ -1,5 +1,5 @@
 wrapper package
 ==========================
 
-.. automodule:: tbwrapper.wrapper
+.. automodule:: pyscope.wrapper
 	:members:

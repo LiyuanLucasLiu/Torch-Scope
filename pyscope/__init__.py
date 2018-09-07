@@ -4,4 +4,4 @@ __license__ = "Apache License 2.0"
 __maintainer__ = "Liyuan Liu"
 __email__ = "llychinalz@gmail.com"
 
-from tbwrapper.wrapper import wrapper
+from pyscope.wrapper import wrapper

@@ -180,7 +180,7 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
-autodoc_mock_imports = ['numpy', 'tensorboardX', 'git', 'torch']
+# autodoc_mock_imports = ['numpy', 'tensorboardX', 'git', 'torch']
 
 intersphinx_mapping = {
     'git': ('https://gitpython.readthedocs.io/en/stable/', None),

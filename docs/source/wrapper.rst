@@ -1,5 +1,5 @@
 wrapper package
 ==========================
 
-.. automodule:: pyscope.wrapper
+.. automodule:: torch_scope.wrapper
 	:members:

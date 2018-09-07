@@ -1,4 +1,4 @@
-# PyScope
+# Torch-Scope
 
 [![Documentation Status](https://readthedocs.org/projects/tensorboard-wrapper/badge/?version=latest)](http://tensorboard-wrapper.readthedocs.io/en/latest/?badge=latest)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -19,19 +19,19 @@ We are in an early-release beta. Expect some adventures and rough edges.
 
 ## Installation
 
-To install via pipy:
+To install via pypi:
 ```
 pip install torch-scope
 ```
 
 To build from source:
 ```
-pip install git+https://github.com/LiyuanLucasLiu/PyScope
+pip install git+https://github.com/LiyuanLucasLiu/Torch-Scope
 ```
 or
 ```
-git clone https://github.com/LiyuanLucasLiu/PyScope.git
-cd PyScope
+git clone https://github.com/LiyuanLucasLiu/Torch-Scope.git
+cd Torch-Scope
 python setup.py install
 ```
 
@@ -43,7 +43,7 @@ An example is provided as below, please read the doc for a detailed api explaina
 * use tensorboard to track the model stats (tensorboard --logdir PATH/log/ --port ####)
 
 ```
-from pyscope import wrapper
+from torch_scope import wrapper
 ...
 
 if __name__ == '__main__':

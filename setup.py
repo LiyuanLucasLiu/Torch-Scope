@@ -21,7 +21,7 @@ setup(
     long_description= history,
     author='Lucas Liu',
     author_email='llychinalz@gmail.com',
-    url='https://github.com/LiyuanLucasLiu/PyScope',
+    url='https://github.com/LiyuanLucasLiu/Torch-Scope',
     packages=find_packages(exclude=['docs']),
     include_package_data=True,
     install_requires=requirements,

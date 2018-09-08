@@ -22,10 +22,25 @@ class basic_wrapper(object):
 
     This class features all-static methods and supports:
 
-    1. Tracking environments, dependency, implementations and checkpoints;
-    2. Logger wrapper with two handlers;
-    3. tensorboard wrapper
+    1. Checkpoint loading;
+    2. Auto device selection.
     """
+    @staticmethod
+    def restore_configue(path, name='config.json'):
+        """
+        Restore the config dict.
+
+        Parameters
+        ----------
+        path: ``str``, required.
+            The path toward the folder.
+        name: ``str``, optional, (default = "config.json").
+            Name for the configuration name.
+        """
+        with open(os.path.join(path, name), 'r') as fin:
+            config = json.load(fin)
+
+        return config
 
     @staticmethod
     def restore_latest_checkpoint(folder_path):
@@ -85,6 +100,133 @@ class basic_wrapper(object):
         """
         return torch.load(file_path, map_location=lambda storage, loc: storage)
 
+    @staticmethod
+    def nvidia_memory_map(logger = None, use_logger = True):
+        """
+        Get the current GPU memory usage.
+        Based on https://discuss.pytorch.org/t/access-gpu-memory-usage-in-pytorch/3192/4
+
+        Parameters
+        ----------
+        use_logger: ``bool``, optional, (default = True).
+            Whether to add the information in the log.
+        logger: ``Logger``, optional, (default = None).
+            The logger used to print (otherwise ``print`` would be used).
+
+        Returns
+        -------
+        Memory_map: ``Dict[int, str]``
+            Keys are device ids as integers.
+            Values are memory usage as integers in MB.
+        """
+        if "PCI_BUS_ID" != os.environ["CUDA_DEVICE_ORDER"]:
+
+            warn_info = "It's recommended to set ``CUDA_DEVICE_ORDER`` \
+                        to be ``PCI_BUS_ID`` by ``export CUDA_DEVICE_ORDER=PCI_BUS_ID``; \
+                        otherwise, it's not guaranteed that the gpu index from \
+                        pytorch to be consistent the ``nvidia-smi`` results. "
+            if logger:
+                logger.warning(warn_info)
+            else:
+                print(warn_info)
+
+        result = subprocess.check_output(['nvidia-smi', '--query-gpu=memory.used,utilization.gpu',
+                    '--format=csv,noheader'], encoding='utf-8')
+        gpu_memory = result.strip().split('\n')
+        gpu_memory_map = {x: y.split(',') for x, y in zip(range(len(gpu_memory)), gpu_memory)}
+
+        if use_logger:
+            if logger:
+                print_func = logger.info
+            else:
+                print_func = print
+            print_func("GPU memory usages:")
+            print_func("GPU ID: Mem\t Utils")
+            for k, v in gpu_memory_map.items():
+                print_func("GPU  {}: {}\t {}".format(k, v[0], v[1]))
+
+        return gpu_memory_map
+
+    @staticmethod
+    def get_bytes(size, suffix = '', logger = None):
+        """
+        Convert other memory size to bytes
+
+        Parameters
+        ----------
+        size: ``str``, required.
+            The numeric part of the memory size.
+        suffix: ``str``, optional (default='').
+            The unit of the memory size.
+        logger: ``Logger``, optional, (default = None).
+            The logger used to print (otherwise ``print`` would be used).
+        """
+        size = float(size)
+
+        if not suffix or suffix.isspace():
+            return size
+        
+        size = int(size)
+        suffix = suffix.lower()
+        if suffix == 'kb' or suffix == 'kib':
+            return size << 10
+        elif suffix == 'mb' or suffix == 'mib':
+            return size << 20
+        elif suffix == 'gb' or suffix == 'gib':
+            return size << 30
+
+        if logger:
+            logger.error("Suffix uncognized: {}".format(suffix))
+        else:
+            print("Suffix uncognized: {}".format(suffix))
+
+        return -1
+
+    @staticmethod
+    def auto_device(metrics='memory', logger = None, use_logger = True):
+        """
+        Automatically choose the gpu (would return the gpu index with minimal used gpu memory).
+
+        Parameters
+        __________
+        metrics: ``str``, optional, (default='memory').
+            metric for gpu selection, supporting ``memory`` (used memory) and ``utils``.
+        logger: ``Logger``, optional, (default = None).
+            The logger used to print (otherwise ``print`` would be used.
+        use_logger: ``bool``, optional, (default = True).
+            Whether to add the information in the log.
+        """
+        assert (metrics == 'memory' or metrics == 'utils')
+
+        if torch.cuda.is_available():
+            memory_list = basic_wrapper.nvidia_memory_map(logger = logger)
+            minimal_usage = float('inf')
+            gpu_index = -1
+            for k, v in memory_list.items():
+                if 'memory' == metrics:
+                    v = v[0].split()
+                    v = basic_wrapper.get_bytes(v[0], v[1], logger = logger)
+                else:
+                    v = float(v[1].replace('%', ''))
+
+                if v < minimal_usage:
+                    minimal_usage = v
+                    gpu_index = k
+
+            if use_logger:
+                if logger:
+                    logger.info("Recommended GPU Index: {}".format(gpu_index))
+                else:
+                    print("Recommended GPU Index: {}".format(gpu_index))       
+            return gpu_index
+        else:
+            if use_logger:
+                if logger:
+                    logger.info("CPU would be used.")
+                else:
+                    print("CPU would be used.")      
+            return -1
+
 class wrapper(basic_wrapper):
     """
     
@@ -94,7 +236,8 @@ class wrapper(basic_wrapper):
 
     1. Tracking environments, dependency, implementations and checkpoints;
     2. Logger wrapper with two handlers;
-    3. tensorboard wrapper
+    3. Tensorboard wrapper;
+    4. Auto device selection;
 
     Parameters
     ----------
@@ -188,6 +331,100 @@ class wrapper(basic_wrapper):
         with open(os.path.join(self.path, 'environ.json'), 'w') as fout:
             json.dump(environments, fout)
 
+    def restore_configue(self, name='config.json'):
+        """
+        Restore the config dict.
+
+        Parameters
+        ----------
+        name: ``str``, optional, (default = "config.json").
+            Name for the configuration name.
+        """
+        with open(os.path.join(self.path, name), 'r') as fin:
+            config = json.load(fin)
+
+        return config
+
+    def restore_latest_checkpoint(self, folder_path = None):
+        """
+        Restore the latest checkpoint.
+
+        Parameters
+        ----------
+        folder_path: ``str``, optional, (default = None).
+            Path to the folder contains checkpoints
+
+        Returns
+        -------
+        checkpoint: ``dict``.
+            A ``dict`` contains 'model' and 'optimizer' (if saved).
+        """
+        if not folder_path:
+            folder_path = self.path
+        return basic_wrapper.restore_latest_checkpoint(folder_path)
+
+    def restore_best_checkpoint(self, folder_path = None):
+        """
+        Restore the best checkpoint.
+
+        Parameters
+        ----------
+        folder_path: ``str``, optional, (default = None).
+            Path to the folder contains checkpoints
+
+        Returns
+        -------
+        checkpoint: ``dict``.
+            A ``dict`` contains 'model' and 'optimizer' (if saved).
+        """
+        if not folder_path:
+            folder_path = self.path
+        return basic_wrapper.restore_best_checkpoint(folder_path)
+
+    def nvidia_memory_map(self, use_logger = True):
+        """
+        Get the current GPU memory usage.
+        Based on https://discuss.pytorch.org/t/access-gpu-memory-usage-in-pytorch/3192/4
+
+        Parameters
+        ----------
+        use_logger: ``bool``, optional, (default = True).
+            Whether to add the information in the log.
+
+        Returns
+        -------
+        Memory_map: ``Dict[int, str]``
+            Keys are device ids as integers.
+            Values are memory usage as integers in MB.
+        """
+        return basic_wrapper.nvidia_memory_map(logger = self.logger, use_logger = use_logger)
+
+    def get_bytes(size, suffix = ''):
+        """
+        Convert other memory size to bytes
+
+        Parameters
+        ----------
+        size: ``str``, required.
+            The numeric part of the memory size.
+        suffix: ``str``, optional (default='').
+            The unit of the memory size.
+        """
+        return basic_wrapper.get_bytes(size, suffix = suffix, logger = self.logger)
+
+    def auto_device(self, metrics='memory', use_logger = True):
+        """
+        Automatically choose the gpu (would return the gpu index with minimal used gpu memory).
+
+        Parameters
+        __________
+        metrics: ``str``, optional, (default='memory').
+            metric for gpu selection, supporting ``memory`` (used memory) and ``utils``.
+        use_logger: ``bool``, optional, (default = True).
+            Whether to add the information in the log.
+        """
+        return basic_wrapper.auto_device(metrics = metrics, logger = self.logger, use_logger = use_logger)
+
     def confirm_an_empty_path(self, path):
         if os.path.exists(path):
             self.logger.critical("Checkpoint Folder Already Exists: {}".format(path))
@@ -202,99 +439,6 @@ class wrapper(basic_wrapper):
                 else:
                     self.logger.critical("Only 'yes' or 'no' are acceptable.")
         return True
-
-    def nvidia_memory_map(self, add_log = True):
-        """
-        Get the current GPU memory usage.
-        Based on https://discuss.pytorch.org/t/access-gpu-memory-usage-in-pytorch/3192/4
-
-        Parameters
-        ----------
-        add_log: ``bool``, optional, (default = True).
-            Whether to add the information in the log.
-
-        Returns
-        -------
-        Memory_map: ``Dict[int, str]``
-            Keys are device ids as integers.
-            Values are memory usage as integers in MB.
-        """
-        if "PCI_BUS_ID" != os.environ["CUDA_DEVICE_ORDER"]:
-            self.logger.warning("It's recommended to set ``CUDA_DEVICE_ORDER`` \
-                        to be ``PCI_BUS_ID`` by ``export CUDA_DEVICE_ORDER=PCI_BUS_ID``; \
-                        otherwise, it's not guaranteed that the gpu index from \
-                        pytorch to be consistent the ``nvidia-smi`` results. ")
-
-        result = subprocess.check_output(['nvidia-smi', '--query-gpu=memory.used,utilization.gpu',
-                    '--format=csv,noheader'], encoding='utf-8')
-        gpu_memory = result.strip().split('\n')
-        gpu_memory_map = {x: y.split(',') for x, y in zip(range(len(gpu_memory)), gpu_memory)}
-
-        if add_log:
-            self.logger.info("GPU memory usages:")
-            self.logger.info("GPU ID: Mem\t Utils")
-            for k, v in gpu_memory_map.items():
-                self.logger.info("GPU  {}: {}\t {}".format(k, v[0], v[1]))
-
-        return gpu_memory_map
-
-    def get_bytes(self, size, suffix = ''):
-        """
-        Convert other memory size to bytes
-
-        Parameters
-        ----------
-        size: ``str``, required.
-            The numeric part of the memory size.
-        suffix: ``str``, optional (default='').
-            The unit of the memory size.
-        """
-        size = float(size)
-
-        if not suffix or suffix.isspace():
-            return size
-        
-        size = int(size)
-        suffix = suffix.lower()
-        if suffix == 'kb' or suffix == 'kib':
-            return size << 10
-        elif suffix == 'mb' or suffix == 'mib':
-            return size << 20
-        elif suffix == 'gb' or suffix == 'gib':
-            return size << 30
-
-        self.logger.error("Suffix uncognized: {}".format(suffix))
-        return False
-
-    def auto_device(self, metrics='memory'):
-        """
-        Automatically choose the gpu (would return the gpu index with minimal used gpu memory).
-
-        Parameters
-        __________
-        metrics: ``str``, optional, (default='memory').
-            metric for gpu selection, supporting ``memory`` (used memory) and ``utils``.
-        """
-        assert (metrics == 'memory' or metrics == 'utils')
-
-        if torch.cuda.is_available():
-            memory_list = self.nvidia_memory_map()
-            minimal_usage = float('inf')
-            gpu_index = -1
-            for k, v in memory_list.items():
-                if 'memory' == metrics:
-                    v = v[0].split()
-                    v = self.get_bytes(v[0], v[1])
-                else:
-                    v = float(v[1].replace('%', ''))
-
-                if v < minimal_usage:
-                    minimal_usage = v
-                    gpu_index = k
-            self.logger.info("Recommended GPU Index: {}".format(gpu_index))
-            return gpu_index
-        else:
-            return -1
             
     def save_configue(self, config, name='config.json'):
         """
@@ -405,8 +549,8 @@ class wrapper(basic_wrapper):
     def add_loss_vs_batch(self, 
                         kv_dict: dict, 
                         batch_index: int, 
-                        add_log: bool = True,
-                        add_writer: bool = True):
+                        use_logger: bool = True,
+                        use_writer: bool = True):
         """
         Add loss to the ``loss_tracking`` section in the tensorboard.
 
@@ -416,13 +560,13 @@ class wrapper(basic_wrapper):
             Dictionary contains the key-value pair of losses (or metrics)
         batch_index: ``int``, required.
             Index of the added loss.
-        add_log: ``bool``, optional, (default = True).
+        use_logger: ``bool``, optional, (default = True).
             Whether to print the information in the log.
         """
         for k, v in kv_dict.items():
-            if add_writer:
+            if use_writer:
                 self.writer.add_scalar('loss_tracking/' + k, v, batch_index)
-            if add_log:
+            if use_logger:
                 self.logger.info("%s : %s", k, v)
 
     def add_model_parameter_stats(self, 

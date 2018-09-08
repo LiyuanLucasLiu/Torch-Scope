@@ -16,12 +16,81 @@ import subprocess
 from typing import Dict
 from tensorboardX import SummaryWriter
         
-class wrapper():
+class basic_wrapper(object):
+    """
+    Light toolkit wrapper for experiments based on pytorch. 
+
+    This class features all-static methods and supports:
+
+    1. Tracking environments, dependency, implementations and checkpoints;
+    2. Logger wrapper with two handlers;
+    3. tensorboard wrapper
+    """
+
+    @staticmethod
+    def restore_latest_checkpoint(folder_path):
+        """
+        Restore the latest checkpoint.
+
+        Parameters
+        ----------
+        folder_path: ``str``, required.
+            Path to the folder contains checkpoints
+
+        Returns
+        -------
+        checkpoint: ``dict``.
+            A ``dict`` contains 'model' and 'optimizer' (if saved).
+        """
+        checkpoint_list = [cp for cp in os.listdir(folder_path) if 'checkpoint_' in cp]
+
+        if len(checkpoint_list) == 0:
+            return None
+
+        latest_counter = max([int(filter(str.isdigit, cp)) for cp in checkpoint_list])
+
+        return basic_wrapper.restore_checkpoint(os.path.join(folder_path, 'checkpoint_{}.th'.format(latest_counter)))
+
+    @staticmethod
+    def restore_best_checkpoint(folder_path):
+        """
+        Restore the best checkpoint.
+
+        Parameters
+        ----------
+        folder_path: ``str``, required.
+            Path to the folder contains checkpoints
+
+        Returns
+        -------
+        checkpoint: ``dict``.
+            A ``dict`` contains 'model' and 'optimizer' (if saved).
+        """
+        return basic_wrapper.restore_checkpoint(os.path.join(folder_path, 'best.th'))
+
+    @staticmethod
+    def restore_checkpoint(file_path):
+        """
+        Restore checkpoint.
+
+        Parameters
+        ----------
+        folder_path: ``str``, required.
+            Path to the checkpoint file
+
+        Returns
+        -------
+        checkpoint: ``dict``.
+            A ``dict`` contains 'model' and 'optimizer' (if saved).
+        """
+        return torch.load(file_path, map_location=lambda storage, loc: storage)
+
+class wrapper(basic_wrapper):
     """
     
     Toolkit wrapper for experiments based on pytorch. 
 
-    This package has three features:
+    This class has three features:
 
     1. Tracking environments, dependency, implementations and checkpoints;
     2. Logger wrapper with two handlers;
@@ -66,7 +135,7 @@ class wrapper():
             self.logger.critical("Input 'yes' to confirm deleting this folder; or 'no' to exit.")
             delete_folder = False
             while not delete_folder:
-                action = input("yes for delete or no for exit:").lower()
+                action = input("yes for delete or no for exit: ").lower()
                 if 'yes' == action:
                     shutil.rmtree(path)
                     delete_folder = True
@@ -241,7 +310,7 @@ class wrapper():
         if type(config) is not dict:
             config = vars(config)
 
-        with open(os.path.join(self.path, 'config.json'), 'w') as fout:
+        with open(os.path.join(self.path, name), 'w') as fout:
             json.dump(config, fout)
 
     def save_checkpoint(self, 
@@ -271,64 +340,6 @@ class wrapper():
         self.counter += 1
         if self.counter > self.checkpoints_to_keep:
             os.remove(os.path.join(self.path, 'checkpoint_{}.th'.format(self.counter - self.checkpoints_to_keep - 1)))
-
-    @staticmethod
-    def restore_latest_checkpoint(folder_path):
-        """
-        Restore the latest checkpoint.
-
-        Parameters
-        ----------
-        folder_path: ``str``, required.
-            Path to the folder contains checkpoints
-
-        Returns
-        -------
-        checkpoint: ``dict``.
-            A ``dict`` contains 'model' and 'optimizer' (if saved).
-        """
-        checkpoint_list = [cp for cp in os.listdir(folder_path) if 'checkpoint_' in cp]
-
-        if len(checkpoint_list) == 0:
-            return None
-
-        latest_counter = max([int(filter(str.isdigit, cp)) for cp in checkpoint_list])
-
-        return wrapper.restore_checkpoint(os.path.join(folder_path, 'checkpoint_{}.th'.format(latest_counter)))
-
-    @staticmethod
-    def restore_best_checkpoint(folder_path):
-        """
-        Restore the best checkpoint.
-
-        Parameters
-        ----------
-        folder_path: ``str``, required.
-            Path to the folder contains checkpoints
-
-        Returns
-        -------
-        checkpoint: ``dict``.
-            A ``dict`` contains 'model' and 'optimizer' (if saved).
-        """
-        return wrapper.restore_checkpoint(os.path.join(folder_path, 'best.th'))
-
-    @staticmethod
-    def restore_checkpoint(file_path):
-        """
-        Restore checkpoint.
-
-        Parameters
-        ----------
-        folder_path: ``str``, required.
-            Path to the checkpoint file
-
-        Returns
-        -------
-        checkpoint: ``dict``.
-            A ``dict`` contains 'model' and 'optimizer' (if saved).
-        """
-        return torch.load(file_path, map_location=lambda storage, loc: storage)
 
     def debug(self, *args, **kargs):
         """
@@ -390,7 +401,6 @@ class wrapper():
         Close the tensorboard writer and the logger.
         """
         self.writer.close()
-        self.logger.close()
 
     def add_loss_vs_batch(self, 
                         kv_dict: dict, 

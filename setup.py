@@ -3,7 +3,6 @@
 
 from setuptools import setup, find_packages
 
-
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
@@ -16,7 +15,7 @@ requirements = [
 
 setup(
     name='torch-scope',
-    version='0.2.0',
+    version='0.2.1',
     description='A Toolkit for Training, Tracking and Saving PyTorch Models',
     long_description= history,
     author='Lucas Liu',

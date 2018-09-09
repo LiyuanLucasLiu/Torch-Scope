@@ -20,3 +20,7 @@ History
 ------------------
 * Debug and write in the history;
 * Include the history file in the package;
+
+0.2.2 (2017-09-09)
+------------------
+* Support ignore when encounters existing path folder;

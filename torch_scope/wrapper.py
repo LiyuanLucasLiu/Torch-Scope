@@ -305,7 +305,7 @@ class wrapper(basic_wrapper):
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(seed)
 
-        self.logger.info("Saving up system environemnt and python packages")
+        self.logger.info("Saving system environemnt and python packages")
         environments = {
             "PATH": path,
             "RANDOM SEED": seed,
@@ -426,20 +426,30 @@ class wrapper(basic_wrapper):
         return basic_wrapper.auto_device(metrics = metrics, logger = self.logger, use_logger = use_logger)
 
     def confirm_an_empty_path(self, path):
+        """
+        Check whether a folder is an empty folder (not-exist).
+
+        Parameters
+        __________
+        path: ``str``, required.
+            Path to the target folder.
+        """
         if os.path.exists(path):
             self.logger.critical("Checkpoint Folder Already Exists: {}".format(path))
             self.logger.critical("Input 'yes' to confirm deleting this folder; or 'no' to exit.")
             while True:
-                action = input("yes for delete or no for exit:").lower()
+                action = input("yes for delete, ignore for ignore, or no for exit:").lower()
                 if 'yes' == action:
                     shutil.rmtree(path)
+                    return True
+                elif 'ignore' == action:
                     return True
                 elif 'no' == action:
                     return False
                 else:
-                    self.logger.critical("Only 'yes' or 'no' are acceptable.")
+                    self.logger.critical("Only 'yes', 'ignore' and 'no' are acceptable.")
         return True
-            
+
     def save_configue(self, config, name='config.json'):
         """
         Save config dict to the ``config.json`` under the path.

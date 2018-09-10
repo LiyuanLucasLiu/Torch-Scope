@@ -183,7 +183,7 @@ class basic_wrapper(object):
                 for k, v in gpu_memory_map.items():
                     print_func("GPU  {}: {}\t {}".format(k, v[0], v[1]))
             else:
-                print_func("GPU {}: {} (Used mem)\t {} (Utils)".format(gpu_index, gpu_memory_map[gpu_index][0], gpu_memory_map[gpu_index][1]))
+                print_func("GPU {}: {} (Used Memory)\t {} (Utils)".format(gpu_index, gpu_memory_map[gpu_index][0], gpu_memory_map[gpu_index][1]))
 
         return gpu_memory_map
 
@@ -612,7 +612,7 @@ class wrapper(basic_wrapper):
         Parameters
         ----------
         kv_dict: ``dict``, required.
-            Dictionary contains the key-value pair of losses (or metrics)
+            Dictionary contains the key-value pair of losses (or metrics).
         batch_index: ``int``, required.
             Index of the added loss.
         use_logger: ``bool``, optional, (default = True).

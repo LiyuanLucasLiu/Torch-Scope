@@ -15,7 +15,42 @@ import logging
 import subprocess
 from typing import Dict
 from tensorboardX import SummaryWriter
-        
+
+BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
+
+RESET_SEQ = "\033[0m"
+COLOR_SEQ = "\033[1;%dm"
+BOLD_SEQ = "\033[1m"
+
+COLORS = {
+    'WARNING': WHITE,
+    'INFO': GREEN,
+    'DEBUG': BLUE,
+    'CRITICAL': YELLOW,
+    'ERROR': RED
+}
+
+def formatter_message(message, use_color = True):
+    if use_color:
+        message = message.replace("$RESET", RESET_SEQ).replace("$BOLD", BOLD_SEQ)
+    else:
+        message = message.replace("$RESET", "").replace("$BOLD", "")
+    return message
+
+class ColoredFormatter(logging.Formatter):
+
+    def __init__(self, msg, use_color = True):
+        logging.Formatter.__init__(self, msg)
+        self.use_color = use_color
+
+    def format(self, record):
+        msg = record.msg
+        levelname = record.levelname
+        if self.use_color and levelname in COLORS:
+            msg_color = COLOR_SEQ % (30 + COLORS[levelname]) + msg + RESET_SEQ
+            record.msg = msg_color
+        return logging.Formatter.format(self, record)
+
 class basic_wrapper(object):
     """
     Light toolkit wrapper for experiments based on pytorch. 
@@ -101,7 +136,7 @@ class basic_wrapper(object):
         return torch.load(file_path, map_location=lambda storage, loc: storage)
 
     @staticmethod
-    def nvidia_memory_map(logger = None, use_logger = True):
+    def nvidia_memory_map(logger = None, use_logger = True, gpu_index = None):
         """
         Get the current GPU memory usage.
         Based on https://discuss.pytorch.org/t/access-gpu-memory-usage-in-pytorch/3192/4
@@ -112,6 +147,8 @@ class basic_wrapper(object):
             Whether to add the information in the log.
         logger: ``Logger``, optional, (default = None).
             The logger used to print (otherwise ``print`` would be used).
+        gpu_index: ``int``, optional, (default = None).
+            The index of the GPU for loggin. 
 
         Returns
         -------
@@ -119,7 +156,7 @@ class basic_wrapper(object):
             Keys are device ids as integers.
             Values are memory usage as integers in MB.
         """
-        if "PCI_BUS_ID" != os.environ["CUDA_DEVICE_ORDER"]:
+        if "CUDA_DEVICE_ORDER" not in os.environ or "PCI_BUS_ID" != os.environ["CUDA_DEVICE_ORDER"]:
 
             warn_info = "It's recommended to set ``CUDA_DEVICE_ORDER`` \
                         to be ``PCI_BUS_ID`` by ``export CUDA_DEVICE_ORDER=PCI_BUS_ID``; \
@@ -141,9 +178,12 @@ class basic_wrapper(object):
             else:
                 print_func = print
             print_func("GPU memory usages:")
-            print_func("GPU ID: Mem\t Utils")
-            for k, v in gpu_memory_map.items():
-                print_func("GPU  {}: {}\t {}".format(k, v[0], v[1]))
+            if not gpu_index:
+                print_func("GPU ID: Mem\t Utils")
+                for k, v in gpu_memory_map.items():
+                    print_func("GPU  {}: {}\t {}".format(k, v[0], v[1]))
+            else:
+                print_func("GPU {}: {} (Used mem)\t {} (Utils)".format(gpu_index, gpu_memory_map[gpu_index][0], gpu_memory_map[gpu_index][1]))
 
         return gpu_memory_map
 
@@ -258,17 +298,19 @@ class wrapper(basic_wrapper):
                 seed: int = None,
                 enable_git_track: bool = False,
                 checkpoints_to_keep: int = 1):
-        # stream logger
+    
         if name is not None:
             self.name = name
             self.logger = logging.getLogger(name)
         else:
             self.name = path
             self.logger = logging.getLogger(path)
-
-        logFormatter = logging.Formatter("%(asctime)s : %(message)s", "%Y-%m-%d %H:%M:%S")
+    
         consoleHandler = logging.StreamHandler()
-        consoleHandler.setFormatter(logFormatter)
+        FORMAT = "[$BOLD%(asctime)s$RESET] %(message)s"
+        COLOR_FORMAT = formatter_message(FORMAT, True)
+        color_formatter = ColoredFormatter(COLOR_FORMAT)
+        consoleHandler.setFormatter(color_formatter)
         self.logger.addHandler(consoleHandler)
         self.logger.setLevel(logging.INFO)
 
@@ -294,6 +336,7 @@ class wrapper(basic_wrapper):
 
         self.writer = SummaryWriter(log_dir=os.path.join(path, 'log/'))
         fileHandler = logging.FileHandler(os.path.join(path, 'log.txt'))
+        logFormatter = logging.Formatter("[%(asctime)s]: %(message)s", "%Y-%m-%d %H:%M:%S")
         fileHandler.setFormatter(logFormatter)
         self.logger.addHandler(fileHandler)
 
@@ -381,7 +424,7 @@ class wrapper(basic_wrapper):
             folder_path = self.path
         return basic_wrapper.restore_best_checkpoint(folder_path)
 
-    def nvidia_memory_map(self, use_logger = True):
+    def nvidia_memory_map(self, use_logger = True, gpu_index = None):
         """
         Get the current GPU memory usage.
         Based on https://discuss.pytorch.org/t/access-gpu-memory-usage-in-pytorch/3192/4
@@ -390,6 +433,8 @@ class wrapper(basic_wrapper):
         ----------
         use_logger: ``bool``, optional, (default = True).
             Whether to add the information in the log.
+        gpu_index: ``int``, optional, (default = None).
+            The index of the GPU for loggin. 
 
         Returns
         -------
@@ -397,7 +442,7 @@ class wrapper(basic_wrapper):
             Keys are device ids as integers.
             Values are memory usage as integers in MB.
         """
-        return basic_wrapper.nvidia_memory_map(logger = self.logger, use_logger = use_logger)
+        return basic_wrapper.nvidia_memory_map(logger = self.logger, use_logger = use_logger, gpu_index = gpu_index)
 
     def get_bytes(size, suffix = ''):
         """

@@ -24,3 +24,9 @@ History
 0.2.2 (2017-09-09)
 ------------------
 * Support ignore when encounters existing path folder;
+
+0.2.3 (2017-09-10)
+------------------
+* Fixing bug for "CUDA_DEVICE_ORDER" not set in os.environ; 
+* Adding the feature for selective nvidia-smi logging
+* Use color logging formatter (not fully supported by all bashes environments).

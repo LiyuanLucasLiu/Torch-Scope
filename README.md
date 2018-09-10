@@ -3,6 +3,7 @@
 [![Documentation Status](https://readthedocs.org/projects/tensorboard-wrapper/badge/?version=latest)](http://tensorboard-wrapper.readthedocs.io/en/latest/?badge=latest)
 [![PyPI version](https://badge.fury.io/py/torch-scope.svg)](https://badge.fury.io/py/torch-scope)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Downloads](https://pepy.tech/badge/torch-scope)](https://pepy.tech/project/torch-scope)
 
 A Toolkit for training pytorch models, which has three features:
 

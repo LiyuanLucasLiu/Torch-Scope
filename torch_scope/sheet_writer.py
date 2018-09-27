@@ -30,12 +30,12 @@ class sheet_writer(object):
                     self.credential_path = all_data['credential_path']
                 else:
                     self.credential_path = credential_path
-                if "worksheet_id" in all_data:
-                    self.worksheet_id = all_data["worksheet_id"]
+                if "worksheet_name" in all_data:
+                    loaded_root_path = all_data["worksheet_name"]
                 else:
-                    self.worksheet_id = None
+                    loaded_root_path = None
         else:
-            self.worksheet_id = None
+            loaded_root_path = None
             self._name_dict = dict()
             self._metric_dict = dict()
             # assert (self.credential_path is not None)
@@ -55,13 +55,14 @@ class sheet_writer(object):
 
         self.root_path = os.path.realpath(os.path.expanduser(root_path))
 
-        if self.worksheet_id is None:
+        if loaded_root_path is None:
             self._wks = self._sh.add_worksheet(title=self.root_path, rows="100", cols="26")
         else:
-            self._wks = self._sh.get_worksheet(self.worksheet_id)
+            self._wks = self._sh.worksheet(loaded_root_path)
             if self._wks is None:
                 self._wks = self._sh.add_worksheet(title=self.root_path, rows="100", cols="26")
-        self.worksheet_id = self._wks.id
+            else:
+                self.root_path = loaded_root_path
 
         if folder_name not in self._name_dict:
             self._name_dict[folder_name] = len(self._name_dict) + 2
@@ -75,7 +76,7 @@ class sheet_writer(object):
         save the config file.
         """
         with open(self.config_file, 'w') as fout:
-            json.dump({'name_dict': self._name_dict, 'metric_dict': self._metric_dict, 'credential_path': self.credential_path, 'worksheet_id': self.worksheet_id}, fout) 
+            json.dump({'name_dict': self._name_dict, 'metric_dict': self._metric_dict, 'credential_path': self.credential_path, 'worksheet_name': self.root_path}, fout) 
 
     def add_description(self, description):
         """

@@ -34,3 +34,7 @@ History
 0.3.0 (2017-09-27)
 ------------------
 * Adding spreadsheet writer.
+
+0.3.1 (2017-09-27)
+------------------
+* Fixing a bug of reloading previous worksheet.

@@ -12,13 +12,21 @@ A Toolkit for training pytorch models, which has three features:
 
 1. Tracking environments, dependency, implementations and checkpoints;
 2. Providing a logger wrapper with two handlers (to ```std``` and ```file```);
-3. Providing a tensorboard wrapper
+3. Supporting automatic device selection;
+4. Providing a tensorboard wrapper;
+5. Providing a spreadsheet writer to automatically summarizing notes and results;
 
 .. toctree::
    :maxdepth: 2
-   :caption: Package Reference
+   :caption: Wrapper
 
    wrapper
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Spreadsheet Writer
+
+   sheet_writer
 
 
 Indices and tables

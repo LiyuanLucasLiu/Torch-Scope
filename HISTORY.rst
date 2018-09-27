@@ -30,3 +30,7 @@ History
 * Fixing bug for "CUDA_DEVICE_ORDER" not set in os.environ; 
 * Adding the feature for selective nvidia-smi logging
 * Use color logging formatter (not fully supported by all bashes environments).
+
+0.3.0 (2017-09-27)
+------------------
+* Adding spreadsheet writer.

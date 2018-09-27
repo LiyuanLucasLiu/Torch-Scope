@@ -16,6 +16,8 @@ import subprocess
 from typing import Dict
 from tensorboardX import SummaryWriter
 
+from torch_scope import sheet_writer
+
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
 
 RESET_SEQ = "\033[0m"
@@ -289,6 +291,10 @@ class wrapper(basic_wrapper):
         The random seed (would be random generated if not provided).
     enable_git_track: ``bool``, optional
         If True, track the implementation with git (would automatically commit tracked files).
+    sheet_track_name: ``str``, optional, (default=None).
+        The name of the google sheet for tracking metric.
+    credential_path: ``str``, optional, (default=None).
+        The path towards the credential file for tracking with google sheet.
     checkpoints_to_keep : ``int``, optional, (default=1).
         Number of checkpoints.
     """
@@ -297,6 +303,8 @@ class wrapper(basic_wrapper):
                 name: str = None,
                 seed: int = None,
                 enable_git_track: bool = False,
+                sheet_track_name: str = None,
+                credential_path: str = None,
                 checkpoints_to_keep: int = 1):
     
         if name is not None:
@@ -370,6 +378,16 @@ class wrapper(basic_wrapper):
             self.logger.debug("Git commit: %s", repo.head.commit.hexsha)
             
             environments['GIT HEAD COMMIT'] = repo.head.commit.hexsha
+
+        if sheet_track_name:
+            root_path, folder_name = os.path.split(path + '/')
+            root_path, folder_name = os.path.split(root_path)
+            if credential_path is None:
+                self.sw = sheet_writer(sheet_track_name, root_path, folder_name)
+            else:
+                self.sw = sheet_writer(sheet_track_name, root_path, folder_name, credential_path)
+        else:
+            self.sw = None
 
         with open(os.path.join(self.path, 'environ.json'), 'w') as fout:
             json.dump(environments, fout)
@@ -601,11 +619,26 @@ class wrapper(basic_wrapper):
         """
         self.writer.close()
 
+    def add_description(self, description):
+        """
+        Add description for the experiment to the spreadsheet.
+
+        Parameters
+        ----------
+        description: ``str``, required.
+            Description for the experiment.
+        """
+        if self.sw:
+            self.sw.add_description(description)
+        else:
+            self.logger.warning("No spreadsheet writer is availabel for adding description")
+
     def add_loss_vs_batch(self, 
                         kv_dict: dict, 
                         batch_index: int, 
                         use_logger: bool = True,
-                        use_writer: bool = True):
+                        use_writer: bool = True,
+                        use_sheet_tracker: bool = True):
         """
         Add loss to the ``loss_tracking`` section in the tensorboard.
 
@@ -617,12 +650,16 @@ class wrapper(basic_wrapper):
             Index of the added loss.
         use_logger: ``bool``, optional, (default = True).
             Whether to print the information in the log.
+        use_sheet_tracker: ``bool``, optional, (default = True).
+            Whether to use the sheet writer (when available).
         """
         for k, v in kv_dict.items():
             if use_writer:
                 self.writer.add_scalar('loss_tracking/' + k, v, batch_index)
             if use_logger:
                 self.logger.info("%s : %s", k, v)
+            if use_sheet_tracker and self.sw:
+                self.sw.add_metric(k, v)
 
     def add_model_parameter_stats(self, 
                                     model: torch.nn.Module, 

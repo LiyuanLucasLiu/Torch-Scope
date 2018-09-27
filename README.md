@@ -106,3 +106,13 @@ if __name__ == '__main__':
     	else:
     		pw.save_checkpoint(model, optimizer, is_best = False)
 ```
+
+## Advanced Usage
+
+### Auto Device
+
+### Git Tracking
+
+### Spreadsheet Logging
+
+Share the spreadsheet with the following account ```torch-scope@torch-scope.iam.gserviceaccount.com```. And access the table with its name. 

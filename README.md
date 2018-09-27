@@ -11,6 +11,7 @@ A Toolkit for training pytorch models, which has three features:
 - Providing a logger wrapper with two handlers (to ```std``` and ```file```);
 - Supporting automatic device selection;
 - Providing a tensorboard wrapper;
+- Providing a spreadsheet writer to automatically summarizing notes and results;
 
 We are in an early-release beta. Expect some adventures and rough edges.
 

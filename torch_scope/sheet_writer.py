@@ -3,10 +3,9 @@ from oauth2client.service_account import ServiceAccountCredentials
 import os
 import json
 
-def sheet_writer(object):
-
-    def __init__(self, name, root_path, folder_name, credential_path = '/shared/data/ll2/Torch-Scope/torch-scope-8acf12bee10f.json'):
+class sheet_writer(object):
     """
+
     Spreadsheet writer.
 
     Parameters
@@ -20,42 +19,63 @@ def sheet_writer(object):
     credential_path: ``str``, optional, (default = PATH_TO_CRED).
         The path to the credential file.
     """
-        self._scope = ['https://spreadsheets.google.com/feeds',
-                 'https://www.googleapis.com/auth/drive']
-
-        self._credentials = ServiceAccountCredentials.from_json_keyfile_name(credential_path, self._scope)
-
-        self._gc = gspread.authorize(credentials)
-
-        self._sh = gc.open(name)
-
-        self.root_path = root_path
-        folder_name = folder_name
-
+    def __init__(self, name, root_path, folder_name, credential_path = None):
         self.config_file = os.path.join(root_path, 'sheet.config.json')
-        if os.path.exists(config_file):
-            with open(config_file, 'r') as fin:
+        if os.path.exists(self.config_file):
+            with open(self.config_file, 'r') as fin:
                 all_data = json.load(fin)
                 self._name_dict = all_data['name_dict']
                 self._metric_dict = all_data['metric_dict']
-                self._wks = self._sh.worksheet(path)
+                if credential_path is None:
+                    self.credential_path = all_data['credential_path']
+                else:
+                    self.credential_path = credential_path
+                if "worksheet_id" in all_data:
+                    self.worksheet_id = all_data["worksheet_id"]
+                else:
+                    self.worksheet_id = None
         else:
+            self.worksheet_id = None
             self._name_dict = dict()
             self._metric_dict = dict()
-            self._wks = self._sh.worksheet(path)
+            # assert (self.credential_path is not None)
+            if credential_path is None:
+                self.credential_path = '/shared/data/ll2/Torch-Scope/torch-scope-8acf12bee10f.json'
+            else:
+                self.credential_path = credential_path
 
-        assert(folder_name not in self._name_dict)
+        self._scope = ['https://spreadsheets.google.com/feeds',
+                 'https://www.googleapis.com/auth/drive']
 
-        self._name_dict[folder_name] = len(self._name_dict) + 1
+        self._credentials = ServiceAccountCredentials.from_json_keyfile_name(self.credential_path, self._scope)
+
+        self._gc = gspread.authorize(self._credentials)
+
+        self._sh = self._gc.open(name)
+
+        self.root_path = os.path.realpath(os.path.expanduser(root_path))
+
+        if self.worksheet_id is None:
+            self._wks = self._sh.add_worksheet(title=self.root_path, rows="100", cols="26")
+        else:
+            self._wks = self._sh.get_worksheet(self.worksheet_id)
+            if self._wks is None:
+                self._wks = self._sh.add_worksheet(title=self.root_path, rows="100", cols="26")
+        self.worksheet_id = self._wks.id
+
+        if folder_name not in self._name_dict:
+            self._name_dict[folder_name] = len(self._name_dict) + 2
+            self.save_config()
+
         self.row_index = self._name_dict[folder_name]
-        self.save_config()
+        self._wks.update_cell(self.row_index, 1, folder_name)
 
     def save_config(self):
         """
         save the config file.
         """
         with open(self.config_file, 'w') as fout:
-            json.dump({'name_dict': self._name_dict, 'metric_dict': self._metric_dict}, fout) 
+            json.dump({'name_dict': self._name_dict, 'metric_dict': self._metric_dict, 'credential_path': self.credential_path, 'worksheet_id': self.worksheet_id}, fout) 
 
     def add_description(self, description):
         """
@@ -80,7 +100,7 @@ def sheet_writer(object):
             Value of the metric.
         """
         if metric_name not in self._metric_dict:
-            self._metric_dict[metric_name] = len(self._metric_dict) + 1
+            self._metric_dict[metric_name] = len(self._metric_dict) + 2
             self._wks.update_cell(1, self._metric_dict[metric_name], metric_name)
             self.save_config()
 

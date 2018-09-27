@@ -16,7 +16,7 @@ import subprocess
 from typing import Dict
 from tensorboardX import SummaryWriter
 
-from torch_scope import sheet_writer
+from torch_scope.sheet_writer import sheet_writer
 
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
 
@@ -382,10 +382,7 @@ class wrapper(basic_wrapper):
         if sheet_track_name:
             root_path, folder_name = os.path.split(path + '/')
             root_path, folder_name = os.path.split(root_path)
-            if credential_path is None:
-                self.sw = sheet_writer(sheet_track_name, root_path, folder_name)
-            else:
-                self.sw = sheet_writer(sheet_track_name, root_path, folder_name, credential_path)
+            self.sw = sheet_writer(sheet_track_name, root_path, folder_name, credential_path)
         else:
             self.sw = None
 
@@ -628,6 +625,7 @@ class wrapper(basic_wrapper):
         description: ``str``, required.
             Description for the experiment.
         """
+        self.logger.info("Adding description: {}".format(description))
         if self.sw:
             self.sw.add_description(description)
         else:

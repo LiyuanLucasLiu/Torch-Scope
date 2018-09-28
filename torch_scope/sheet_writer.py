@@ -89,7 +89,7 @@ class sheet_writer(object):
         """
         self.add_metric('descript', description)
 
-    def add_metric(self, metric_name, metric_value):
+    def add_metric(self, metric_name, metric_value, login=False):
         """
         Add metric value for the current expriments to the spreadsheet.
 
@@ -99,10 +99,22 @@ class sheet_writer(object):
             Name of the metric.
         metric_value: required.
             Value of the metric.
+        login: ``bool``, optional, (default = False).
+            Whether to re-login.
         """
-        if metric_name not in self._metric_dict:
-            self._metric_dict[metric_name] = len(self._metric_dict) + 2
-            self._wks.update_cell(1, self._metric_dict[metric_name], metric_name)
-            self.save_config()
+        if login:
+            self._gc.login()
 
-        self._wks.update_cell(self.row_index, self._metric_dict[metric_name], metric_value)
+        try:    
+            if metric_name not in self._metric_dict:
+                metric_index = len(self._metric_dict) + 2
+                self._wks.update_cell(1, metric_index, metric_name)
+                self._metric_dict[metric_name] = metric_index
+                self.save_config()
+
+            self._wks.update_cell(self.row_index, self._metric_dict[metric_name], metric_value)
+        except gspread.exceptions.APIError as ins:
+            if not login:
+                self.add_metric(metric_name, metric_value, login=True)
+            else:
+                raise ins

@@ -22,10 +22,6 @@ A Toolkit for training pytorch models, which has three features:
 
    wrapper
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Spreadsheet Writer
-
    sheet_writer
 
 

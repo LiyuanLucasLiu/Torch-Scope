@@ -60,15 +60,23 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     pw = wrapper(os.path.join(args.checkpoint_path, args.name), name = args.log_dir, enable_git_track = False)
-    # Or if the current folder is binded with git, you can turn on the git tracking
+    # Or if the current folder is binded with git, you can turn on the git tracking as below
     # pw = wrapper(os.path.join(args.checkpoint_path, args.name), name = args.log_dir, enable_git_track = True)
-
-    gpu_index = tbw.auto_device() if 'auto' == args.gpu else int(args.gpu)
+    # if you properly set the path to credential_path and want to use spreadsheet writer, turn on sheet tracking as below
+    # pw = wrapper(os.path.join(args.checkpoint_path, args.name), name = args.log_dir, \
+    #             enable_git_track=args.git_tracking, sheet_track_name=args.spreadsheet_name, \ 
+    #             credential_path="/data/work/jingbo/ll2/Torch-Scope/torch-scope-8acf12bee10f.json")
+    
+    
+    gpu_index = pw.auto_device() if 'auto' == args.gpu else int(args.gpu)
     device = torch.device("cuda:" + str(gpu_index) if gpu_index >= 0 else "cpu")
 
     pw.save_configue(args) # dump the config to config.json
 
     pw.set_level('info') # or 'debug', etc.
+    
+    # if the spreadsheet writer is enabled, you can add a description about the current model
+    # pw.add_description(args.description) 
 
     pw.info(str(args)) # would be plotted to std & file if level is 'info' or lower
 

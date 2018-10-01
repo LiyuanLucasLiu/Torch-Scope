@@ -160,10 +160,10 @@ class basic_wrapper(object):
         """
         if "CUDA_DEVICE_ORDER" not in os.environ or "PCI_BUS_ID" != os.environ["CUDA_DEVICE_ORDER"]:
 
-            warn_info = "It's recommended to set ``CUDA_DEVICE_ORDER`` \
-                        to be ``PCI_BUS_ID`` by ``export CUDA_DEVICE_ORDER=PCI_BUS_ID``; \
-                        otherwise, it's not guaranteed that the gpu index from \
-                        pytorch to be consistent the ``nvidia-smi`` results. "
+            warn_info = "It's recommended to set ``CUDA_DEVICE_ORDER``" + \
+                        "to be ``PCI_BUS_ID`` by ``export CUDA_DEVICE_ORDER=PCI_BUS_ID``;" + \
+                        "otherwise, it's not guaranteed that the gpu index from" + \
+                        "pytorch to be consistent the ``nvidia-smi`` results."
             if logger:
                 logger.warning(warn_info)
             else:
@@ -530,7 +530,8 @@ class wrapper(basic_wrapper):
     def save_checkpoint(self, 
                         model: torch.nn.Module,
                         optimizer: torch.optim.Optimizer = None,
-                        is_best: bool=False):
+                        is_best: bool=False,
+                        s_dict: dict=None):
         """
         Save checkpoint under the path.
 
@@ -541,9 +542,14 @@ class wrapper(basic_wrapper):
         optimizer: ``torch.optim.Optimizer``, optional.
             The optimizer to be saved (if provided)
         is_best: bool, optional, (default=False).
-            If set false, would only be saved as ``checkpoint_#counter.th``; otherwise, would also be saved as ``best.th``
+            If set false, would only be saved as ``checkpoint_#counter.th``; otherwise, would also be saved as ``best.th``.
+        s_dict: dict, optional, (default=None).
+            Other necessay information for checkpoint tracking.
         """
-        s_dict = {'model': model.state_dict()}
+        if not s_dict:
+            s_dict = dict()
+        s_dict['model'] = model.state_dict()
+
         if optimizer is not None:
             s_dict['optimizer'] = optimizer.state_dict()
 

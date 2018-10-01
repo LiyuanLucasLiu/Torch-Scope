@@ -38,3 +38,12 @@ History
 0.3.1 (2017-09-27)
 ------------------
 * Fixing a bug of reloading previous worksheet.
+
+0.3.2 (2017-09-28)
+------------------
+* Fixing a bug of reloading previous worksheet.
+
+0.3.3 (2017-09-28)
+------------------
+* Modified the api for `save_checkpoint`.
+* Modified the waringing information for `CUDA_DEVICE_ORDER`.

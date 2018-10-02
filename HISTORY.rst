@@ -47,3 +47,7 @@ History
 ------------------
 * Modified the api for `save_checkpoint`.
 * Modified the waringing information for `CUDA_DEVICE_ORDER`.
+
+0.3.4 (2017-10-02)
+------------------
+* Allow the path to be empty.

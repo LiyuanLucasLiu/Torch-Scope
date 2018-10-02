@@ -285,6 +285,7 @@ class wrapper(basic_wrapper):
     ----------
     path : ``str``, required.
         Output path for logger, checkpoint, ...
+        If set to ``None``, we would not create any file-writers.
     name : ``str``, optional, (default=path).
         Name for the experiment,
     seed: ``int``, optional.
@@ -310,9 +311,12 @@ class wrapper(basic_wrapper):
         if name is not None:
             self.name = name
             self.logger = logging.getLogger(name)
-        else:
+        elif path is not None:
             self.name = path
             self.logger = logging.getLogger(path)
+        else:
+            self.name = "Logger"
+            self.logger = logging.getLogger("Logger")
     
         consoleHandler = logging.StreamHandler()
         FORMAT = "[$BOLD%(asctime)s$RESET] %(message)s"
@@ -322,72 +326,77 @@ class wrapper(basic_wrapper):
         self.logger.addHandler(consoleHandler)
         self.logger.setLevel(logging.INFO)
 
-        # check path
-        if os.path.exists(path):
-            self.logger.critical("Checkpoint Folder Already Exists: {}".format(path))
-            self.logger.critical("Input 'yes' to confirm deleting this folder; or 'no' to exit.")
-            delete_folder = False
-            while not delete_folder:
-                action = input("yes for delete or no for exit: ").lower()
-                if 'yes' == action:
-                    shutil.rmtree(path)
-                    delete_folder = True
-                elif 'no' == action:
-                    sys.exit()
-                else:
-                    self.logger.critical("Only 'yes' or 'no' are acceptable.")
-
         # file logger
         self.path = path
-        self.checkpoints_to_keep = checkpoints_to_keep
-        self.counter = 0
 
-        self.writer = SummaryWriter(log_dir=os.path.join(path, 'log/'))
-        fileHandler = logging.FileHandler(os.path.join(path, 'log.txt'))
-        logFormatter = logging.Formatter("[%(asctime)s]: %(message)s", "%Y-%m-%d %H:%M:%S")
-        fileHandler.setFormatter(logFormatter)
-        self.logger.addHandler(fileHandler)
+        if path is not None:
 
-        if seed is None:
-            seed = random.randint(1, 10000)
-        random.seed(seed)
-        numpy.random.seed(seed)
-        torch.manual_seed(seed)
-        if torch.cuda.is_available():
-            torch.cuda.manual_seed_all(seed)
+            self.checkpoints_to_keep = checkpoints_to_keep
+            self.counter = 0
+            # check path
+            if os.path.exists(path):
+                self.logger.critical("Checkpoint Folder Already Exists: {}".format(path))
+                self.logger.critical("Input 'yes' to confirm deleting this folder; or 'no' to exit.")
+                delete_folder = False
+                while not delete_folder:
+                    action = input("yes for delete or no for exit: ").lower()
+                    if 'yes' == action:
+                        shutil.rmtree(path)
+                        delete_folder = True
+                    elif 'no' == action:
+                        sys.exit()
+                    else:
+                        self.logger.critical("Only 'yes' or 'no' are acceptable.")
 
-        self.logger.info("Saving system environemnt and python packages")
-        environments = {
-            "PATH": path,
-            "RANDOM SEED": seed,
-            "SYS ENVIRONMENT": {k.decode('utf-8'): v.decode('utf-8') for k, v in os.environ._data.items()},
-            "COMMAND": sys.argv, 
-            "INSTALLED PACKAGES": subprocess.check_output(["pip", "freeze"], universal_newlines=True).strip()
-        }
+            self.writer = SummaryWriter(log_dir=os.path.join(path, 'log/'))
+            fileHandler = logging.FileHandler(os.path.join(path, 'log.txt'))
+            logFormatter = logging.Formatter("[%(asctime)s]: %(message)s", "%Y-%m-%d %H:%M:%S")
+            fileHandler.setFormatter(logFormatter)
+            self.logger.addHandler(fileHandler)
 
-        if enable_git_track:
-            self.logger.info("Setting up git tracker")
-            repo = git.Repo('.', search_parent_directories=True)
-            self.logger.debug("Git root path: %s", repo.git.rev_parse("--show-toplevel"))
-            self.logger.debug("Git branch: %s", repo.active_branch.name)
+            if seed is None:
+                seed = random.randint(1, 10000)
+            random.seed(seed)
+            numpy.random.seed(seed)
+            torch.manual_seed(seed)
+            if torch.cuda.is_available():
+                torch.cuda.manual_seed_all(seed)
 
-            if repo.is_dirty():
-                repo.git.add(u=True)
-                repo.git.commit(m='experiment checkpoint for: {}'.format(self.name))
+            self.logger.info("Saving system environemnt and python packages")
+            environments = {
+                "PATH": path,
+                "RANDOM SEED": seed,
+                "SYS ENVIRONMENT": {k.decode('utf-8'): v.decode('utf-8') for k, v in os.environ._data.items()},
+                "COMMAND": sys.argv, 
+                "INSTALLED PACKAGES": subprocess.check_output(["pip", "freeze"], universal_newlines=True).strip()
+            }
 
-            self.logger.debug("Git commit: %s", repo.head.commit.hexsha)
-            
-            environments['GIT HEAD COMMIT'] = repo.head.commit.hexsha
+            if enable_git_track:
+                self.logger.info("Setting up git tracker")
+                repo = git.Repo('.', search_parent_directories=True)
+                self.logger.debug("Git root path: %s", repo.git.rev_parse("--show-toplevel"))
+                self.logger.debug("Git branch: %s", repo.active_branch.name)
 
-        if sheet_track_name:
-            root_path, folder_name = os.path.split(path + '/')
-            root_path, folder_name = os.path.split(root_path)
-            self.sw = sheet_writer(sheet_track_name, root_path, folder_name, credential_path)
+                if repo.is_dirty():
+                    repo.git.add(u=True)
+                    repo.git.commit(m='experiment checkpoint for: {}'.format(self.name))
+
+                self.logger.debug("Git commit: %s", repo.head.commit.hexsha)
+                
+                environments['GIT HEAD COMMIT'] = repo.head.commit.hexsha
+
+            if sheet_track_name:
+                root_path, folder_name = os.path.split(path + '/')
+                root_path, folder_name = os.path.split(root_path)
+                self.sw = sheet_writer(sheet_track_name, root_path, folder_name, credential_path)
+            else:
+                self.sw = None
+
+            with open(os.path.join(self.path, 'environ.json'), 'w') as fout:
+                json.dump(environments, fout)
         else:
+            self.writer = None
             self.sw = None
-
-        with open(os.path.join(self.path, 'environ.json'), 'w') as fout:
-            json.dump(environments, fout)
 
     def restore_configue(self, name='config.json'):
         """
@@ -398,6 +407,7 @@ class wrapper(basic_wrapper):
         name: ``str``, optional, (default = "config.json").
             Name for the configuration name.
         """
+        assert(self.path is not None)
         with open(os.path.join(self.path, name), 'r') as fin:
             config = json.load(fin)
 
@@ -418,6 +428,7 @@ class wrapper(basic_wrapper):
             A ``dict`` contains 'model' and 'optimizer' (if saved).
         """
         if not folder_path:
+            assert(self.path is not None)
             folder_path = self.path
         return basic_wrapper.restore_latest_checkpoint(folder_path)
 
@@ -436,6 +447,7 @@ class wrapper(basic_wrapper):
             A ``dict`` contains 'model' and 'optimizer' (if saved).
         """
         if not folder_path:
+            assert(self.path is not None)
             folder_path = self.path
         return basic_wrapper.restore_best_checkpoint(folder_path)
 
@@ -521,6 +533,7 @@ class wrapper(basic_wrapper):
         name: ``str``, optional, (default = "config.json").
             Name for the configuration name.
         """
+        assert (self.path is not None)
         if type(config) is not dict:
             config = vars(config)
 
@@ -546,6 +559,7 @@ class wrapper(basic_wrapper):
         s_dict: dict, optional, (default=None).
             Other necessay information for checkpoint tracking.
         """
+        assert (self.path is not None)
         if not s_dict:
             s_dict = dict()
         s_dict['model'] = model.state_dict()
@@ -660,7 +674,7 @@ class wrapper(basic_wrapper):
         for k, v in kv_dict.items():
             if use_writer:
                 self.writer.add_scalar('loss_tracking/' + k, v, batch_index)
-            if use_logger:
+            if use_logger and self.logger:
                 self.logger.info("%s : %s", k, v)
             if use_sheet_tracker and self.sw:
                 self.sw.add_metric(k, v)
@@ -681,6 +695,7 @@ class wrapper(basic_wrapper):
         save: ``bool``, optional, (default = False).
             Whether to save the model parameters (for the method ``add_model_update_stats``).
         """
+        assert(self.writer is not None)
         if save:
             self.param_updates = {name: param.clone().detach().cpu() for name, param in model.named_parameters()}
             self.param_updates_batchindex = batch_index
@@ -712,7 +727,7 @@ class wrapper(basic_wrapper):
         batch_index: ``int``, required.
             Index of the model parameters updates.
         """
-
+        assert(self.writer is not None)
         assert(self.param_updates_batchindex == batch_index)
 
         for name, param in model.named_parameters():
@@ -735,6 +750,7 @@ class wrapper(basic_wrapper):
         batch_index: ``int``, required.
             Index of the model parameters updates.
         """
+        assert(self.writer is not None)
         for name, param in model.named_parameters():
             if param.requires_grad:
                 self.writer.add_histogram("parameter_histogram/" + name, param.clone().detach().cpu().data.numpy(), batch_index)

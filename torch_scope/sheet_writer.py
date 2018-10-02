@@ -1,6 +1,6 @@
 """
-.. module:: wrapper
-    :synopsis: wrapper
+.. module:: sheet_writer
+    :synopsis: sheet_writer
 .. moduleauthor:: Liyuan Liu
 """
 import gspread

@@ -51,3 +51,8 @@ History
 0.3.4 (2017-10-02)
 ------------------
 * Allow the path to be empty.
+
+0.4.0 (2017-10-02)
+------------------
+* Add a new command to restore previous checkpoint implementations.
+

@@ -3,6 +3,10 @@
 
 from setuptools import setup, find_packages
 
+def read_readme():
+    with open('README.md') as f:
+        return f.read()
+
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
@@ -18,9 +22,9 @@ requirements = [
 
 setup(
     name='torch-scope',
-    version='0.4.0',
+    version='0.4.1',
     description='A Toolkit for Training, Tracking and Saving PyTorch Models',
-    long_description= history,
+    long_description= read_readme(),
     author='Lucas Liu',
     author_email='llychinalz@gmail.com',
     url='https://github.com/LiyuanLucasLiu/Torch-Scope',
@@ -28,7 +32,9 @@ setup(
     include_package_data=True,
     install_requires=requirements,
     license='Apache License 2.0',
-    scripts=["bin/torch_scope"],
+    entry_points={
+        'console_scripts': ['torch_scope=torch_scope.commands:run'],
+    },
     zip_safe=False,
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',

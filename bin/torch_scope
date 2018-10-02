@@ -1,2 +1,0 @@
-#!/bin/sh
-python -m torch_scope.run "$@"

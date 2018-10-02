@@ -56,3 +56,6 @@ History
 ------------------
 * Add a new command to restore previous checkpoint implementations.
 
+0.4.1 (2017-10-02)
+------------------
+* Changed structure and enter point.

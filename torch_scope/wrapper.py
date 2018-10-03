@@ -17,6 +17,7 @@ from typing import Dict
 from tensorboardX import SummaryWriter
 
 from torch_scope.sheet_writer import sheet_writer
+from torch_scope.file_manager import cached_url
 
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
 
@@ -135,7 +136,7 @@ class basic_wrapper(object):
         checkpoint: ``dict``.
             A ``dict`` contains 'model' and 'optimizer' (if saved).
         """
-        return torch.load(file_path, map_location=lambda storage, loc: storage)
+        return torch.load(cached_url(file_path), map_location=lambda storage, loc: storage)
 
     @staticmethod
     def nvidia_memory_map(logger = None, use_logger = True, gpu_index = None):

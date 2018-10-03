@@ -59,3 +59,7 @@ History
 0.4.1 (2017-10-02)
 ------------------
 * Changed structure and enter point.
+
+0.4.2 (2017-10-02)
+------------------
+* Add cached url.

@@ -62,4 +62,4 @@ History
 
 0.4.2 (2017-10-02)
 ------------------
-* Add cached url.
+* Add `cached url` method.

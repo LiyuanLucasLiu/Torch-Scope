@@ -574,7 +574,9 @@ class wrapper(basic_wrapper):
         torch.save(s_dict, os.path.join(self.path, 'checkpoint_{}.th'.format(self.counter)))
         self.counter += 1
         if self.counter > self.checkpoints_to_keep:
-            os.remove(os.path.join(self.path, 'checkpoint_{}.th'.format(self.counter - self.checkpoints_to_keep - 1)))
+            file_path = os.path.join(self.path, 'checkpoint_{}.th'.format(self.counter - self.checkpoints_to_keep - 1))
+            if os.path.exists(file_path):
+                os.remove(file_path)
 
     def debug(self, *args, **kargs):
         """
@@ -648,7 +650,9 @@ class wrapper(basic_wrapper):
         """
         self.logger.info("Adding description: {}".format(description))
         if self.sw:
-            self.sw.add_description(description)
+            msg = self.sw.add_description(description)
+            if msg:
+                self.logger.error(msg)
         else:
             self.logger.warning("No spreadsheet writer is availabel for adding description")
 
@@ -678,7 +682,9 @@ class wrapper(basic_wrapper):
             if use_logger and self.logger:
                 self.logger.info("%s : %s", k, v)
             if use_sheet_tracker and self.sw:
-                self.sw.add_metric(k, v)
+                msg = self.sw.add_metric(k, v)
+                if msg:
+                    self.logger.error(msg)
 
     def add_model_parameter_stats(self, 
                                     model: torch.nn.Module, 

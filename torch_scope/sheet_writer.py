@@ -118,8 +118,10 @@ class sheet_writer(object):
                 self.save_config()
 
             self._wks.update_cell(self.row_index, self._metric_dict[metric_name], metric_value)
-        except gspread.exceptions.APIError as ins:
+        except Exception as ins:
             if not login:
                 self.add_metric(metric_name, metric_value, login=True)
             else:
-                raise ins
+                return '\n'.join([str(type(ins)), str(ins.args), str(ins)])
+        return None
+

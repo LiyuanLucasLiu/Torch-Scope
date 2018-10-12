@@ -67,3 +67,7 @@ History
 0.4.3 (2017-10-02)
 ------------------
 * Fix bugs.
+
+0.4.4 (2017-10-02)
+------------------
+* Small improvments (modified name for sheet writer, would creat folder if not exists).

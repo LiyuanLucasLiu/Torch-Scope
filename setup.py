@@ -17,8 +17,7 @@ requirements = [
     'torch',
     'gspread',
     'PyOpenSSL',
-    'oauth2client',
-    'pycurl'
+    'oauth2client'
 ]
 
 setup(

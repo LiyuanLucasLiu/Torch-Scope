@@ -15,17 +15,20 @@ class sheet_writer(object):
 
     Parameters
     ----------
-    name : ``str``, required.
+    spread_sheet_name : ``str``, required.
         Name for the spreadsheet.
-    root_path: ``str``, required.
+    worksheet_name: ``str``, required.
         The root path for the checkpoint files.
-    folder_name : ``str``, required.
+    row_name : ``str``, required.
         Name for the folder (for the current experiments).
     credential_path: ``str``, optional, (default = PATH_TO_CRED).
         The path to the credential file.
     """
-    def __init__(self, name, root_path, folder_name, credential_path = None):
-        self.config_file = os.path.join(root_path, 'sheet.config.json')
+    def __init__(self, spread_sheet_name, worksheet_name, row_name, credential_path = None):
+        if not os.path.exists(worksheet_name):
+            os.makedirs(worksheet_name)
+
+        self.config_file = os.path.join(worksheet_name, 'sheet.config.json')
         if os.path.exists(self.config_file):
             with open(self.config_file, 'r') as fin:
                 all_data = json.load(fin)
@@ -36,11 +39,11 @@ class sheet_writer(object):
                 else:
                     self.credential_path = credential_path
                 if "worksheet_name" in all_data:
-                    loaded_root_path = all_data["worksheet_name"]
+                    loaded_worksheet_name = all_data["worksheet_name"]
                 else:
-                    loaded_root_path = None
+                    loaded_worksheet_name = None
         else:
-            loaded_root_path = None
+            loaded_worksheet_name = None
             self._name_dict = dict()
             self._metric_dict = dict()
             # assert (self.credential_path is not None)
@@ -56,32 +59,32 @@ class sheet_writer(object):
 
         self._gc = gspread.authorize(self._credentials)
 
-        self._sh = self._gc.open(name)
+        self._sh = self._gc.open(spread_sheet_name)
 
-        self.root_path = os.path.realpath(os.path.expanduser(root_path))
+        self.worksheet_name = os.path.realpath(os.path.expanduser(worksheet_name))
 
-        if loaded_root_path is None:
-            self._wks = self._sh.add_worksheet(title=self.root_path, rows="100", cols="26")
+        if loaded_worksheet_name is None:
+            self._wks = self._sh.add_worksheet(title=self.worksheet_name, rows="100", cols="26")
         else:
-            self._wks = self._sh.worksheet(loaded_root_path)
+            self._wks = self._sh.worksheet(loaded_worksheet_name)
             if self._wks is None:
-                self._wks = self._sh.add_worksheet(title=self.root_path, rows="100", cols="26")
+                self._wks = self._sh.add_worksheet(title=self.worksheet_name, rows="100", cols="26")
             else:
-                self.root_path = loaded_root_path
+                self.worksheet_name = loaded_worksheet_name
 
-        if folder_name not in self._name_dict:
-            self._name_dict[folder_name] = len(self._name_dict) + 2
+        if row_name not in self._name_dict:
+            self._name_dict[row_name] = len(self._name_dict) + 2
             self.save_config()
 
-        self.row_index = self._name_dict[folder_name]
-        self._wks.update_cell(self.row_index, 1, folder_name)
+        self.row_index = self._name_dict[row_name]
+        self._wks.update_cell(self.row_index, 1, row_name)
 
     def save_config(self):
         """
         save the config file.
         """
         with open(self.config_file, 'w') as fout:
-            json.dump({'name_dict': self._name_dict, 'metric_dict': self._metric_dict, 'credential_path': self.credential_path, 'worksheet_name': self.root_path}, fout) 
+            json.dump({'name_dict': self._name_dict, 'metric_dict': self._metric_dict, 'credential_path': self.credential_path, 'worksheet_name': self.worksheet_name}, fout) 
 
     def add_description(self, description):
         """
@@ -124,4 +127,6 @@ class sheet_writer(object):
             else:
                 return '\n'.join([str(type(ins)), str(ins.args), str(ins)])
         return None
+
+    def close(self):
 

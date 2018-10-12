@@ -5,7 +5,6 @@
 """
 import os
 import json
-# import pycurl
 import subprocess
 from hashlib import sha256
 

@@ -17,18 +17,18 @@ class sheet_writer(object):
     ----------
     spread_sheet_name : ``str``, required.
         Name for the spreadsheet.
-    worksheet_name: ``str``, required.
+    path_for_worksheet_name: ``str``, required.
         The root path for the checkpoint files.
     row_name : ``str``, required.
         Name for the folder (for the current experiments).
     credential_path: ``str``, optional, (default = PATH_TO_CRED).
         The path to the credential file.
     """
-    def __init__(self, spread_sheet_name, worksheet_name, row_name, credential_path = None):
-        if not os.path.exists(worksheet_name):
-            os.makedirs(worksheet_name)
+    def __init__(self, spread_sheet_name, path_for_worksheet_name, row_name, credential_path = None):
+        if not os.path.exists(path_for_worksheet_name):
+            os.makedirs(path_for_worksheet_name)
 
-        self.config_file = os.path.join(worksheet_name, 'sheet.config.json')
+        self.config_file = os.path.join(path_for_worksheet_name, 'sheet.config.json')
         if os.path.exists(self.config_file):
             with open(self.config_file, 'r') as fin:
                 all_data = json.load(fin)
@@ -38,12 +38,12 @@ class sheet_writer(object):
                     self.credential_path = all_data['credential_path']
                 else:
                     self.credential_path = credential_path
-                if "worksheet_name" in all_data:
-                    loaded_worksheet_name = all_data["worksheet_name"]
+                if "path_for_worksheet_name" in all_data:
+                    loaded_path_for_worksheet_name = all_data["path_for_worksheet_name"]
                 else:
-                    loaded_worksheet_name = None
+                    loaded_path_for_worksheet_name = None
         else:
-            loaded_worksheet_name = None
+            loaded_path_for_worksheet_name = None
             self._name_dict = dict()
             self._metric_dict = dict()
             # assert (self.credential_path is not None)
@@ -61,16 +61,16 @@ class sheet_writer(object):
 
         self._sh = self._gc.open(spread_sheet_name)
 
-        self.worksheet_name = os.path.realpath(os.path.expanduser(worksheet_name))
+        self.path_for_worksheet_name = os.path.realpath(os.path.expanduser(path_for_worksheet_name))
 
-        if loaded_worksheet_name is None:
-            self._wks = self._sh.add_worksheet(title=self.worksheet_name, rows="100", cols="26")
+        if loaded_path_for_worksheet_name is None:
+            self._wks = self._sh.add_worksheet(title=self.path_for_worksheet_name, rows="100", cols="26")
         else:
-            self._wks = self._sh.worksheet(loaded_worksheet_name)
+            self._wks = self._sh.worksheet(loaded_path_for_worksheet_name)
             if self._wks is None:
-                self._wks = self._sh.add_worksheet(title=self.worksheet_name, rows="100", cols="26")
+                self._wks = self._sh.add_worksheet(title=self.path_for_worksheet_name, rows="100", cols="26")
             else:
-                self.worksheet_name = loaded_worksheet_name
+                self.path_for_worksheet_name = loaded_path_for_worksheet_name
 
         if row_name not in self._name_dict:
             self._name_dict[row_name] = len(self._name_dict) + 2
@@ -84,7 +84,7 @@ class sheet_writer(object):
         save the config file.
         """
         with open(self.config_file, 'w') as fout:
-            json.dump({'name_dict': self._name_dict, 'metric_dict': self._metric_dict, 'credential_path': self.credential_path, 'worksheet_name': self.worksheet_name}, fout) 
+            json.dump({'name_dict': self._name_dict, 'metric_dict': self._metric_dict, 'credential_path': self.credential_path, 'path_for_worksheet_name': self.path_for_worksheet_name}, fout) 
 
     def add_description(self, description):
         """

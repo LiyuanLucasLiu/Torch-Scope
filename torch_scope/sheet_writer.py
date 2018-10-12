@@ -127,6 +127,3 @@ class sheet_writer(object):
             else:
                 return '\n'.join([str(type(ins)), str(ins.args), str(ins)])
         return None
-
-    def close(self):
-

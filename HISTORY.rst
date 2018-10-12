@@ -68,6 +68,10 @@ History
 ------------------
 * Fix bugs.
 
-0.4.4 (2017-10-02)
+0.4.4 (2017-10-12)
 ------------------
 * Small improvments (modified name for sheet writer, would creat folder if not exists).
+
+0.4.5 (2017-10-12)
+------------------
+* Bug fixing.

@@ -7,6 +7,7 @@ import os
 import git
 import sys
 import json
+import time
 import numpy
 import torch
 import shutil
@@ -226,9 +227,9 @@ class basic_wrapper(object):
         return -1
 
     @staticmethod
-    def auto_device(metrics='memory', logger = None, use_logger = True):
+    def auto_device(metrics='memory', logger = None, use_logger = True, required_minimal = None, wait_time = 20):
         """
-        Automatically choose the gpu (would return the gpu index with minimal used gpu memory).
+        Automatically choose the gpu (would return the gpu index with minimal used gpu memory by default).
 
         Parameters
         __________
@@ -238,6 +239,10 @@ class basic_wrapper(object):
             The logger used to print (otherwise ``print`` would be used.
         use_logger: ``bool``, optional, (default = True).
             Whether to add the information in the log.
+        required_minimal: ``str``, optional, (default = None).
+            Required resources for device selection (using the same criterior w. metrics, e.g., ``3000 Mb`` or ``30%``).
+        wait_time: ``int``, optional, (default = 20).
+            Interval in secs between two gpu usage retrival. 
         """
         assert (metrics == 'memory' or metrics == 'utils')
 
@@ -245,23 +250,44 @@ class basic_wrapper(object):
             memory_list = basic_wrapper.nvidia_memory_map(logger = logger)
             minimal_usage = float('inf')
             gpu_index = -1
-            for k, v in memory_list.items():
+            if required_memory is None:
+                required_minimal = -1
+            else:
                 if 'memory' == metrics:
-                    v = v[0].split()
-                    v = basic_wrapper.get_bytes(v[0], v[1], logger = logger)
+                    required_minimal.split()
+                    required_minimal = basic_wrapper.get_bytes(required_minimal[0], required_minimal[1], logger = logger)
                 else:
-                    v = float(v[1].replace('%', ''))
+                    required_minimal = float(required_minimal.replace('%', ''))
 
-                if v < minimal_usage:
-                    minimal_usage = v
-                    gpu_index = k
+            while minimal_usage < required_minimal:
+                for k, v in memory_list.items():
+                    if 'memory' == metrics:
+                        v = v[0].split()
+                        v = basic_wrapper.get_bytes(v[0], v[1], logger = logger)
+                    else:
+                        v = float(v[1].replace('%', ''))
+
+                    if v < minimal_usage:
+                        minimal_usage = v
+                        gpu_index = k
+
+                if minimal_usage < required_minimal:
+
+                    if logger:
+                        logger.info("Not satisfying the required resource: {}".format(required_minimal))
+                    else:
+                        print("Not satisfying the required resource: {}".format(required_minimal))      
+
+                    time.sleep(wait_time)
 
             if use_logger:
                 if logger:
                     logger.info("Recommended GPU Index: {}".format(gpu_index))
                 else:
-                    print("Recommended GPU Index: {}".format(gpu_index))       
+                    print("Recommended GPU Index: {}".format(gpu_index))
+
             return gpu_index
+
         else:
             if use_logger:
                 if logger:
@@ -485,9 +511,9 @@ class wrapper(basic_wrapper):
         """
         return basic_wrapper.get_bytes(size, suffix = suffix, logger = self.logger)
 
-    def auto_device(self, metrics='memory', use_logger = True):
+    def auto_device(metrics='memory', use_logger = True, required_minimal = None, wait_time = 20):
         """
-        Automatically choose the gpu (would return the gpu index with minimal used gpu memory).
+        Automatically choose the gpu (would return the gpu index with minimal used gpu memory by default).
 
         Parameters
         __________
@@ -495,7 +521,12 @@ class wrapper(basic_wrapper):
             metric for gpu selection, supporting ``memory`` (used memory) and ``utils``.
         use_logger: ``bool``, optional, (default = True).
             Whether to add the information in the log.
+        required_minimal: ``str``, optional, (default = None).
+            Required resources for device selection (using the same criterior w. metrics, e.g., ``3000 Mb`` or ``30%``).
+        wait_time: ``int``, optional, (default = 20).
+            Interval in secs between two gpu usage retrival. 
         """
+
         return basic_wrapper.auto_device(metrics = metrics, logger = self.logger, use_logger = use_logger)
 
     def confirm_an_empty_path(self, path):

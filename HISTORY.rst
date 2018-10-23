@@ -75,3 +75,7 @@ History
 0.4.5 (2017-10-12)
 ------------------
 * Bug fixing.
+
+0.4.5 (2017-10-23)
+------------------
+* Add new feature for auto device.

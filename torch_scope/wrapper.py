@@ -250,7 +250,7 @@ class basic_wrapper(object):
             memory_list = basic_wrapper.nvidia_memory_map(logger = logger)
             minimal_usage = float('inf')
             gpu_index = -1
-            if required_memory is None:
+            if required_minimal is None:
                 required_minimal = -1
             else:
                 if 'memory' == metrics:
@@ -259,7 +259,7 @@ class basic_wrapper(object):
                 else:
                     required_minimal = float(required_minimal.replace('%', ''))
 
-            while minimal_usage < required_minimal:
+            while minimal_usage < required_minimal or minimal_usage == float('inf'):
                 for k, v in memory_list.items():
                     if 'memory' == metrics:
                         v = v[0].split()
@@ -511,7 +511,7 @@ class wrapper(basic_wrapper):
         """
         return basic_wrapper.get_bytes(size, suffix = suffix, logger = self.logger)
 
-    def auto_device(metrics='memory', use_logger = True, required_minimal = None, wait_time = 20):
+    def auto_device(self, metrics='memory', use_logger = True, required_minimal = None, wait_time = 20):
         """
         Automatically choose the gpu (would return the gpu index with minimal used gpu memory by default).
 
@@ -527,7 +527,7 @@ class wrapper(basic_wrapper):
             Interval in secs between two gpu usage retrival. 
         """
 
-        return basic_wrapper.auto_device(metrics = metrics, logger = self.logger, use_logger = use_logger)
+        return basic_wrapper.auto_device(metrics = metrics, logger = self.logger, use_logger = use_logger, required_minimal = required_minimal, wait_time = wait_time)
 
     def confirm_an_empty_path(self, path):
         """

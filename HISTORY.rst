@@ -79,3 +79,7 @@ History
 0.4.6 (2017-10-23)
 ------------------
 * Add new feature for auto device.
+
+0.4.7 (2017-10-23)
+------------------
+* Bug Fixing.

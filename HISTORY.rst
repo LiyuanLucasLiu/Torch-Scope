@@ -86,4 +86,8 @@ History
 
 0.4.8 (2017-10-23)
 ------------------
-* Adjust for python 3.5
+* Adjust for python 3.5.
+
+0.4.9 (2017-11-23)
+------------------
+* Minor bug fix. 

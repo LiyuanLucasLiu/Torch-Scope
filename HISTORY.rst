@@ -95,3 +95,7 @@ History
 0.4.10 (2017-11-24)
 ------------------
 * Minor bug fix. 
+
+0.5.0 (2017-12-14)
+------------------
+* Change the design and api for logger. 

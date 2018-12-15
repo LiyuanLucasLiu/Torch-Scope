@@ -55,6 +55,16 @@ class ColoredFormatter(logging.Formatter):
             record.msg = msg_color
         return logging.Formatter.format(self, record)
 
+logger = logging.getLogger(__name__)
+
+consoleHandler = logging.StreamHandler()
+FORMAT = "[$BOLD%(asctime)s$RESET] %(message)s"
+COLOR_FORMAT = formatter_message(FORMAT, True)
+color_formatter = ColoredFormatter(COLOR_FORMAT)
+consoleHandler.setFormatter(color_formatter)
+logging.getLogger().addHandler(consoleHandler)
+logging.getLogger().setLevel(logging.INFO)
+
 class basic_wrapper(object):
     """
     Light toolkit wrapper for experiments based on pytorch. 
@@ -140,7 +150,7 @@ class basic_wrapper(object):
         return torch.load(cached_url(file_path), map_location=lambda storage, loc: storage)
 
     @staticmethod
-    def nvidia_memory_map(logger = None, use_logger = True, gpu_index = None):
+    def nvidia_memory_map(use_logger = True, gpu_index = None):
         """
         Get the current GPU memory usage.
         Based on https://discuss.pytorch.org/t/access-gpu-memory-usage-in-pytorch/3192/4
@@ -149,8 +159,6 @@ class basic_wrapper(object):
         ----------
         use_logger: ``bool``, optional, (default = True).
             Whether to add the information in the log.
-        logger: ``Logger``, optional, (default = None).
-            The logger used to print (otherwise ``print`` would be used).
         gpu_index: ``int``, optional, (default = None).
             The index of the GPU for loggin. 
 
@@ -166,10 +174,8 @@ class basic_wrapper(object):
                         "to be ``PCI_BUS_ID`` by ``export CUDA_DEVICE_ORDER=PCI_BUS_ID``;" + \
                         "otherwise, it's not guaranteed that the gpu index from" + \
                         "pytorch to be consistent the ``nvidia-smi`` results."
-            if logger:
-                logger.warning(warn_info)
-            else:
-                print(warn_info)
+
+            logger.warning(warn_info)
 
         # result = subprocess.check_output(['nvidia-smi', '--query-gpu=memory.used,utilization.gpu',
         #             '--format=csv,noheader'], encoding='utf-8')
@@ -179,22 +185,18 @@ class basic_wrapper(object):
         gpu_memory_map = {x: y.split(',') for x, y in zip(range(len(gpu_memory)), gpu_memory)}
 
         if use_logger:
-            if logger:
-                print_func = logger.info
-            else:
-                print_func = print
-            print_func("GPU memory usages:")
+            logger.info("GPU memory usages:")
             if not gpu_index:
-                print_func("GPU ID: Mem\t Utils")
+                logger.info("GPU ID: Mem\t Utils")
                 for k, v in gpu_memory_map.items():
-                    print_func("GPU  {}: {}\t {}".format(k, v[0], v[1]))
+                    logger.info("GPU  {}: {}\t {}".format(k, v[0], v[1]))
             else:
-                print_func("GPU {}: {} (Used Memory)\t {} (Utils)".format(gpu_index, gpu_memory_map[gpu_index][0], gpu_memory_map[gpu_index][1]))
+                logger.info("GPU {}: {} (Used Memory)\t {} (Utils)".format(gpu_index, gpu_memory_map[gpu_index][0], gpu_memory_map[gpu_index][1]))
 
         return gpu_memory_map
 
     @staticmethod
-    def get_bytes(size, suffix = '', logger = None):
+    def get_bytes(size, suffix = ''):
         """
         Convert other memory size to bytes
 
@@ -204,8 +206,6 @@ class basic_wrapper(object):
             The numeric part of the memory size.
         suffix: ``str``, optional (default='').
             The unit of the memory size.
-        logger: ``Logger``, optional, (default = None).
-            The logger used to print (otherwise ``print`` would be used).
         """
         size = float(size)
 
@@ -221,15 +221,12 @@ class basic_wrapper(object):
         elif suffix == 'gb' or suffix == 'gib':
             return size << 30
 
-        if logger:
-            logger.error("Suffix uncognized: {}".format(suffix))
-        else:
-            print("Suffix uncognized: {}".format(suffix))
+        logger.error("Suffix uncognized: {}".format(suffix))
 
         return -1
 
     @staticmethod
-    def auto_device(metrics='memory', logger = None, use_logger = True, required_minimal = None, wait_time = 20):
+    def auto_device(metrics='memory', use_logger = True, required_minimal = None, wait_time = 20):
         """
         Automatically choose the gpu (would return the gpu index with minimal used gpu memory by default).
 
@@ -237,8 +234,6 @@ class basic_wrapper(object):
         __________
         metrics: ``str``, optional, (default='memory').
             metric for gpu selection, supporting ``memory`` (used memory) and ``utils``.
-        logger: ``Logger``, optional, (default = None).
-            The logger used to print (otherwise ``print`` would be used.
         use_logger: ``bool``, optional, (default = True).
             Whether to add the information in the log.
         required_minimal: ``str``, optional, (default = None).
@@ -249,7 +244,7 @@ class basic_wrapper(object):
         assert (metrics == 'memory' or metrics == 'utils')
 
         if torch.cuda.is_available():
-            memory_list = basic_wrapper.nvidia_memory_map(logger = logger)
+            memory_list = basic_wrapper.nvidia_memory_map()
             minimal_usage = float('inf')
             gpu_index = -1
             if required_minimal is None:
@@ -257,7 +252,7 @@ class basic_wrapper(object):
             else:
                 if 'memory' == metrics:
                     required_minimal.split()
-                    required_minimal = basic_wrapper.get_bytes(required_minimal[0], required_minimal[1], logger = logger)
+                    required_minimal = basic_wrapper.get_bytes(required_minimal[0], required_minimal[1])
                 else:
                     required_minimal = float(required_minimal.replace('%', ''))
 
@@ -265,7 +260,7 @@ class basic_wrapper(object):
                 for k, v in memory_list.items():
                     if 'memory' == metrics:
                         v = v[0].split()
-                        v = basic_wrapper.get_bytes(v[0], v[1], logger = logger)
+                        v = basic_wrapper.get_bytes(v[0], v[1])
                     else:
                         v = float(v[1].replace('%', ''))
 
@@ -275,27 +270,18 @@ class basic_wrapper(object):
 
                 if minimal_usage < required_minimal:
 
-                    if logger:
-                        logger.info("Not satisfying the required resource: {}".format(required_minimal))
-                    else:
-                        print("Not satisfying the required resource: {}".format(required_minimal))      
+                    logger.info("Not satisfying the required resource: {}".format(required_minimal))
 
                     time.sleep(wait_time)
 
             if use_logger:
-                if logger:
-                    logger.info("Recommended GPU Index: {}".format(gpu_index))
-                else:
-                    print("Recommended GPU Index: {}".format(gpu_index))
+                logger.info("Recommended GPU Index: {}".format(gpu_index))
 
             return gpu_index
 
         else:
             if use_logger:
-                if logger:
-                    logger.info("CPU would be used.")
-                else:
-                    print("CPU would be used.")      
+                logger.info("CPU would be used.")
             return -1
 
 class wrapper(basic_wrapper):
@@ -339,23 +325,11 @@ class wrapper(basic_wrapper):
     
         if name is not None:
             self.name = name
-            self.logger = logging.getLogger(name)
         elif path is not None:
             self.name = path
-            self.logger = logging.getLogger(path)
         else:
             self.name = "Logger"
-            self.logger = logging.getLogger("Logger")
-    
-        consoleHandler = logging.StreamHandler()
-        FORMAT = "[$BOLD%(asctime)s$RESET] %(message)s"
-        COLOR_FORMAT = formatter_message(FORMAT, True)
-        color_formatter = ColoredFormatter(COLOR_FORMAT)
-        consoleHandler.setFormatter(color_formatter)
-        self.logger.addHandler(consoleHandler)
-        self.logger.setLevel(logging.INFO)
 
-        # file logger
         self.path = path
 
         if path is not None:
@@ -364,8 +338,8 @@ class wrapper(basic_wrapper):
             self.counter = 0
             # check path
             if os.path.exists(path):
-                self.logger.critical("Checkpoint Folder Already Exists: {}".format(path))
-                self.logger.critical("Input 'yes' to confirm deleting this folder; or 'no' to exit.")
+                logger.critical("Checkpoint Folder Already Exists: {}".format(path))
+                logger.critical("Input 'yes' to confirm deleting this folder; or 'no' to exit.")
                 delete_folder = False
                 while not delete_folder:
                     action = input("yes for delete or no for exit: ").lower()
@@ -375,13 +349,14 @@ class wrapper(basic_wrapper):
                     elif 'no' == action:
                         sys.exit()
                     else:
-                        self.logger.critical("Only 'yes' or 'no' are acceptable.")
+                        logger.critical("Only 'yes' or 'no' are acceptable.")
 
             self.writer = SummaryWriter(log_dir=os.path.join(path, 'log/'))
             fileHandler = logging.FileHandler(os.path.join(path, 'log.txt'))
             logFormatter = logging.Formatter("[%(asctime)s]: %(message)s", "%Y-%m-%d %H:%M:%S")
             fileHandler.setFormatter(logFormatter)
-            self.logger.addHandler(fileHandler)
+            # logging.getLogger().addHandler(fileHandler)
+            logger.addHandler(fileHandler)
 
             if seed is None:
                 seed = random.randint(1, 10000)
@@ -391,7 +366,7 @@ class wrapper(basic_wrapper):
             if torch.cuda.is_available():
                 torch.cuda.manual_seed_all(seed)
 
-            self.logger.info("Saving system environemnt and python packages")
+            logger.info("Saving system environemnt and python packages")
             environments = {
                 "PATH": path,
                 "RANDOM SEED": seed,
@@ -401,16 +376,16 @@ class wrapper(basic_wrapper):
             }
 
             if enable_git_track:
-                self.logger.info("Setting up git tracker")
+                logger.info("Setting up git tracker")
                 repo = git.Repo('.', search_parent_directories=True)
-                self.logger.debug("Git root path: %s", repo.git.rev_parse("--show-toplevel"))
-                self.logger.debug("Git branch: %s", repo.active_branch.name)
+                logger.debug("Git root path: %s", repo.git.rev_parse("--show-toplevel"))
+                logger.debug("Git branch: %s", repo.active_branch.name)
 
                 if repo.is_dirty():
                     repo.git.add(u=True)
                     repo.git.commit(m='experiment checkpoint for: {}'.format(self.name))
 
-                self.logger.debug("Git commit: %s", repo.head.commit.hexsha)
+                logger.debug("Git commit: %s", repo.head.commit.hexsha)
                 
                 environments['GIT HEAD COMMIT'] = repo.head.commit.hexsha
 
@@ -498,7 +473,7 @@ class wrapper(basic_wrapper):
             Keys are device ids as integers.
             Values are memory usage as integers in MB.
         """
-        return basic_wrapper.nvidia_memory_map(logger = self.logger, use_logger = use_logger, gpu_index = gpu_index)
+        return basic_wrapper.nvidia_memory_map(use_logger = use_logger, gpu_index = gpu_index)
 
     def get_bytes(size, suffix = ''):
         """
@@ -511,7 +486,7 @@ class wrapper(basic_wrapper):
         suffix: ``str``, optional (default='').
             The unit of the memory size.
         """
-        return basic_wrapper.get_bytes(size, suffix = suffix, logger = self.logger)
+        return basic_wrapper.get_bytes(size, suffix = suffix)
 
     def auto_device(self, metrics='memory', use_logger = True, required_minimal = None, wait_time = 20):
         """
@@ -529,7 +504,7 @@ class wrapper(basic_wrapper):
             Interval in secs between two gpu usage retrival. 
         """
 
-        return basic_wrapper.auto_device(metrics = metrics, logger = self.logger, use_logger = use_logger, required_minimal = required_minimal, wait_time = wait_time)
+        return basic_wrapper.auto_device(metrics = metrics, use_logger = use_logger, required_minimal = required_minimal, wait_time = wait_time)
 
     def confirm_an_empty_path(self, path):
         """
@@ -541,8 +516,8 @@ class wrapper(basic_wrapper):
             Path to the target folder.
         """
         if os.path.exists(path):
-            self.logger.critical("Checkpoint Folder Already Exists: {}".format(path))
-            self.logger.critical("Input 'yes' to confirm deleting this folder; or 'no' to exit.")
+            logger.critical("Checkpoint Folder Already Exists: {}".format(path))
+            logger.critical("Input 'yes' to confirm deleting this folder; or 'no' to exit.")
             while True:
                 action = input("yes for delete, ignore for ignore, or no for exit:").lower()
                 if 'yes' == action:
@@ -553,7 +528,7 @@ class wrapper(basic_wrapper):
                 elif 'no' == action:
                     return False
                 else:
-                    self.logger.critical("Only 'yes', 'ignore' and 'no' are acceptable.")
+                    logger.critical("Only 'yes', 'ignore' and 'no' are acceptable.")
         return True
 
     def save_configue(self, config, name='config.json'):
@@ -611,55 +586,6 @@ class wrapper(basic_wrapper):
             if os.path.exists(file_path):
                 os.remove(file_path)
 
-    def debug(self, *args, **kargs):
-        """
-        Add debug to logger
-        """
-        self.logger.debug(*args, **kargs)
-
-    def info(self, *args, **kargs):
-        """
-        Add info to logger
-        """
-        self.logger.info(*args, **kargs)
-    
-    def warning(self, *args, **kargs):
-        """
-        Add warning to logger
-        """
-        self.logger.warning(*args, **kargs)
-    
-    def error(self, *args, **kargs):
-        """
-        Add error to logger
-        """
-        self.logger.error(*args, **kargs)
-    
-    def critical(self, *args, **kargs):
-        """
-        Add critical to logger
-        """
-        self.logger.critical(*args, **kargs)
-
-    def set_level(self, level = 'debug'):
-        """
-        Set the level of logging.
-
-        Parameters
-        ----------
-        level: ``str``, required.
-            Setting level to one of ``debug``, ``info``, ``warning``, ``error``, ``critical``
-
-        """
-        level_dict = {'debug': logging.DEBUG, 'info': logging.INFO, 'warning': logging.WARNING, 'error': logging.ERROR, 'critical': logging.CRITICAL}
-        self.logger.setLevel(level_dict[level])
-
-    def get_logger(self):
-        """
-        Return the logger.
-        """
-        return self.logger
-
     def get_writer(self):
         """
         Return the tensorboard writer.
@@ -681,13 +607,13 @@ class wrapper(basic_wrapper):
         description: ``str``, required.
             Description for the experiment.
         """
-        self.logger.info("Adding description: {}".format(description))
+        logger.info("Adding description: {}".format(description))
         if self.sw:
             msg = self.sw.add_description(description)
             if msg:
-                self.logger.error(msg)
+                logger.error(msg)
         else:
-            self.logger.warning("No spreadsheet writer is availabel for adding description")
+            logger.warning("No spreadsheet writer is availabel for adding description")
 
     def add_loss_vs_batch(self, 
                         kv_dict: dict, 
@@ -712,12 +638,12 @@ class wrapper(basic_wrapper):
         for k, v in kv_dict.items():
             if use_writer:
                 self.writer.add_scalar('loss_tracking/' + k, v, batch_index)
-            if use_logger and self.logger:
-                self.logger.info("%s : %s", k, v)
+            if use_logger:
+                logger.info("%s : %s", k, v)
             if use_sheet_tracker and self.sw:
                 msg = self.sw.add_metric(k, v)
                 if msg:
-                    self.logger.error(msg)
+                    logger.error(msg)
 
     def add_model_parameter_stats(self, 
                                     model: torch.nn.Module, 

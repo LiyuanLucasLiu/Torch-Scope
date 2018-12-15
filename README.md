@@ -48,6 +48,7 @@ An example is provided as below, please read the doc for a detailed api explaina
 ```
 from torch_scope import wrapper
 ...
+logger = logging.getLogger(__name__)
 
 if __name__ == '__main__':
 
@@ -73,12 +74,10 @@ if __name__ == '__main__':
 
     pw.save_configue(args) # dump the config to config.json
 
-    pw.set_level('info') # or 'debug', etc.
-    
     # if the spreadsheet writer is enabled, you can add a description about the current model
     # pw.add_description(args.description) 
 
-    pw.info(str(args)) # would be plotted to std & file if level is 'info' or lower
+    logger.info(str(args)) # would be plotted to std & file if level is 'info' or lower
 
     ...
 

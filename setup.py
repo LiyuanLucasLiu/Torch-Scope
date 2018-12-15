@@ -22,7 +22,7 @@ requirements = [
 
 setup(
     name='torch-scope',
-    version='0.4.10',
+    version='0.5.0',
     description='A Toolkit for Training, Tracking and Saving PyTorch Models',
     long_description= read_readme(),
     author='Lucas Liu',

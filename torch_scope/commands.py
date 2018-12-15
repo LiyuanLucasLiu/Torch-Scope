@@ -7,8 +7,10 @@ import os
 import git
 import json
 import argparse
-
+import logging
 from torch_scope import basic_wrapper
+
+logger = logging.getLogger(__name__)
 
 class checkout():
     def add_subparser(self, name, parser):
@@ -25,8 +27,8 @@ def checkout_checkpoint(args):
 
     repo = git.Repo(config['PATH'], search_parent_directories=True)
     repo.git.checkout(config['GIT HEAD COMMIT'])
-    print('Now the implementation has been restored for {}'.format(args.checkpoint_path))
-    print('Please checkout to the master branch after finished.')
+    logger.info('Now the implementation has been restored for {}'.format(args.checkpoint_path))
+    logger.info('Please checkout to the master branch after finished.')
     
 def run():
     parser = argparse.ArgumentParser()

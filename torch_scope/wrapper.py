@@ -6,6 +6,7 @@
 import os
 import git
 import sys
+import copy
 import json
 import time
 import numpy
@@ -48,12 +49,13 @@ class ColoredFormatter(logging.Formatter):
         self.use_color = use_color
 
     def format(self, record):
-        msg = record.msg
-        levelname = record.levelname
+        nrd = copy.deepcopy(record)
+        msg = nrd.msg
+        levelname = nrd.levelname
         if self.use_color and levelname in COLORS:
             msg_color = COLOR_SEQ % (30 + COLORS[levelname]) + msg + RESET_SEQ
-            record.msg = msg_color
-        return logging.Formatter.format(self, record)
+            nrd.msg = msg_color
+        return logging.Formatter.format(self, nrd)
 
 logger = logging.getLogger(__name__)
 

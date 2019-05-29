@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 from setuptools import setup, find_packages
-from readme_renderer.markdown import render, variants
 
 def read_readme():
     with open('README.md') as f:
@@ -23,7 +22,7 @@ requirements = [
 
 setup(
     name='torch-scope',
-    version='0.5.2',
+    version='0.5.3',
     description='A Toolkit for Training, Tracking and Saving PyTorch Models',
     long_description= read_readme(),
     long_description_content_type="text/markdown",

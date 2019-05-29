@@ -107,3 +107,7 @@ History
 0.5.2 (2019-05-29)
 ------------------
 * Change the color format to start from the line begining and fill the whole line.
+
+0.5.3 (2019-05-29)
+------------------
+* Reduce the dependency.

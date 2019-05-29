@@ -9,6 +9,7 @@ import sys
 import copy
 import json
 import time
+import shlex
 import numpy
 import torch
 import shutil
@@ -35,11 +36,14 @@ COLORS = {
     'ERROR': RED
 }
 
+COLS = int(subprocess.check_call(shlex.split('tput cols')))
+
 def formatter_message(message, use_color = True):
     if use_color:
         message = message.replace("$RESET", RESET_SEQ).replace("$BOLD", BOLD_SEQ)
     else:
         message = message.replace("$RESET", "").replace("$BOLD", "")
+    message = '\r' + message + ' ' * (COLS - len(message))
     return message
 
 class ColoredFormatter(logging.Formatter):
@@ -60,7 +64,7 @@ class ColoredFormatter(logging.Formatter):
 logger = logging.getLogger(__name__)
 
 consoleHandler = logging.StreamHandler()
-FORMAT = "\r[$BOLD%(asctime)s$RESET] %(message)s"
+FORMAT = "[$BOLD%(asctime)s$RESET] %(message)s"
 COLOR_FORMAT = formatter_message(FORMAT, True)
 color_formatter = ColoredFormatter(COLOR_FORMAT)
 consoleHandler.setFormatter(color_formatter)

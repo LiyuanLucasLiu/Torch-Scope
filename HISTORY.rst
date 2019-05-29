@@ -103,3 +103,7 @@ History
 0.5.1 (2019-01-03)
 ------------------
 * Change the color format to avoid changing the original msg.
+
+0.5.2 (2019-05-29)
+------------------
+* Change the color format to start from the line begining and fill the whole line.

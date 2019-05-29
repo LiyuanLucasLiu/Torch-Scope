@@ -60,7 +60,7 @@ class ColoredFormatter(logging.Formatter):
 logger = logging.getLogger(__name__)
 
 consoleHandler = logging.StreamHandler()
-FORMAT = "[$BOLD%(asctime)s$RESET] %(message)s"
+FORMAT = "\r[$BOLD%(asctime)s$RESET] %(message)s"
 COLOR_FORMAT = formatter_message(FORMAT, True)
 color_formatter = ColoredFormatter(COLOR_FORMAT)
 consoleHandler.setFormatter(color_formatter)

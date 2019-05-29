@@ -54,7 +54,6 @@ class ColoredFormatter(logging.Formatter):
     def format(self, record):
         nrd = copy.deepcopy(record)
         msg = nrd.msg
-        msg = msg + ' ' * (COLS - len(msg))
         levelname = nrd.levelname
         if self.use_color and levelname in COLORS:
             msg_color = COLOR_SEQ % (30 + COLORS[levelname]) + msg + RESET_SEQ

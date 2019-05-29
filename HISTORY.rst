@@ -111,3 +111,7 @@ History
 0.5.3 (2019-05-29)
 ------------------
 * Reduce the dependency.
+
+0.5.4 (2019-05-29)
+------------------
+* fix width calculation bug.

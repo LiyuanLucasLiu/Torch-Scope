@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from setuptools import setup, find_packages
+from readme_renderer.markdown import render, variants
 
 def read_readme():
     with open('README.md') as f:
@@ -25,6 +26,7 @@ setup(
     version='0.5.2',
     description='A Toolkit for Training, Tracking and Saving PyTorch Models',
     long_description= read_readme(),
+    long_description_content_type="text/markdown",
     author='Lucas Liu',
     author_email='llychinalz@gmail.com',
     url='https://github.com/LiyuanLucasLiu/Torch-Scope',
@@ -46,7 +48,7 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
-    ],
+    ]
 )
 
 # python setup.py sdist bdist_wheel --universal

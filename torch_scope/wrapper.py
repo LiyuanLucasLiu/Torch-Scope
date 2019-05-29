@@ -36,15 +36,14 @@ COLORS = {
     'ERROR': RED
 }
 
-COLS = int(subprocess.check_call(shlex.split('tput cols')))
-
 def formatter_message(message, use_color = True):
     if use_color:
         message = message.replace("$RESET", RESET_SEQ).replace("$BOLD", BOLD_SEQ)
     else:
         message = message.replace("$RESET", "").replace("$BOLD", "")
-    message = '\r' + message + ' ' * (COLS - len(message))
     return message
+
+COLS = int(subprocess.check_output(shlex.split('tput cols')))
 
 class ColoredFormatter(logging.Formatter):
 
@@ -55,11 +54,14 @@ class ColoredFormatter(logging.Formatter):
     def format(self, record):
         nrd = copy.deepcopy(record)
         msg = nrd.msg
+        msg = msg + ' ' * (COLS - len(msg))
         levelname = nrd.levelname
         if self.use_color and levelname in COLORS:
             msg_color = COLOR_SEQ % (30 + COLORS[levelname]) + msg + RESET_SEQ
             nrd.msg = msg_color
-        return logging.Formatter.format(self, nrd)
+        nrd = logging.Formatter.format(self, nrd)
+        nrd = '\r' + nrd + ' ' * (COLS - len(nrd) + 19)
+        return nrd
 
 logger = logging.getLogger(__name__)
 

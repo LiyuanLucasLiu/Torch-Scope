@@ -53,7 +53,7 @@ class ColoredFormatter(logging.Formatter):
 
     def format(self, record):
         nrd = copy.deepcopy(record)
-        msg = nrd.msg
+        msg = str(nrd.msg)
         levelname = nrd.levelname
         if self.use_color and levelname in COLORS:
             msg_color = COLOR_SEQ % (30 + COLORS[levelname]) + msg + RESET_SEQ
@@ -118,7 +118,7 @@ class basic_wrapper(object):
         if len(checkpoint_list) == 0:
             return None
 
-        latest_counter = max([int(filter(str.isdigit, cp)) for cp in checkpoint_list])
+        latest_counter = max([int(''.join(filter(str.isdigit, cp))) for cp in checkpoint_list])
 
         return basic_wrapper.restore_checkpoint(os.path.join(folder_path, 'checkpoint_{}.th'.format(latest_counter)))
 

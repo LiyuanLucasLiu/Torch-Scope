@@ -104,6 +104,17 @@ History
 ------------------
 * Change the color format to avoid changing the original msg.
 
-0.5.2 (2020-03-01)
+0.5.2 (2019-05-29)
+------------------
+* Change the color format to start from the line begining and fill the whole line.
+
+0.5.3 (2019-05-29)
+------------------
+* Reduce the dependency.
+
+0.5.4 (2019-05-29)
+------------------
+
+0.5.5 (2020-03-01)
 ------------------
 * Update logging setting, to avoid conflicts with existing loggers.

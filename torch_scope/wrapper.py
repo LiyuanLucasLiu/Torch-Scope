@@ -21,6 +21,8 @@ from tensorboardX import SummaryWriter
 from torch_scope.sheet_writer import sheet_writer
 from torch_scope.file_manager import cached_url
 
+
+
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
 
 RESET_SEQ = "\033[0m"
@@ -56,6 +58,9 @@ class ColoredFormatter(logging.Formatter):
             msg_color = COLOR_SEQ % (30 + COLORS[levelname]) + msg + RESET_SEQ
             nrd.msg = msg_color
         return logging.Formatter.format(self, nrd)
+
+logging.shutdown()
+reload(logging)
 
 logger = logging.getLogger(__name__)
 
@@ -365,6 +370,10 @@ class wrapper(basic_wrapper):
             random.seed(seed)
             numpy.random.seed(seed)
             torch.manual_seed(seed)
+
+            torch.backends.cudnn.deterministic = True
+            torch.backends.cudnn.benchmark = False
+            
             if torch.cuda.is_available():
                 torch.cuda.manual_seed_all(seed)
 

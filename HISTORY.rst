@@ -103,3 +103,7 @@ History
 0.5.1 (2019-01-03)
 ------------------
 * Change the color format to avoid changing the original msg.
+
+0.5.2 (2020-03-01)
+------------------
+* Update logging setting, to avoid conflicts with existing loggers.

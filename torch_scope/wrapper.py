@@ -18,11 +18,10 @@ import logging
 import subprocess
 from typing import Dict
 from tensorboardX import SummaryWriter
+from importlib import reload
 
 from torch_scope.sheet_writer import sheet_writer
 from torch_scope.file_manager import cached_url
-
-
 
 BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE = range(8)
 
